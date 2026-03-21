@@ -354,12 +354,24 @@ document.getElementById('msg-form').onsubmit = async (e) => {
             }
         };
 
-        socket.on('chat message', m => {
-            const auth = m.author_email.toLowerCase();
-            const recv = m.receiver_email.toLowerCase();
-            if ((auth === myEmail && recv === currentPeer) || (auth === currentPeer && recv === myEmail)) render(m);
-            loadHistory();
-        });
+// --- ЗАМЕНИ СВОЙ СТАРЫЙ БЛОК SOCKET.ON НА ЭТОТ ---
+        const channel = _sup.channel('public:messages')
+            .on('postgres_changes', { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'messages' 
+            }, payload => {
+                const m = payload.new;
+                const auth = m.author_email.toLowerCase();
+                const recv = m.receiver_email.toLowerCase();
+                
+                // Проверяем, нужно ли отрисовать сообщение в текущем чате
+                if ((auth === myEmail && recv === currentPeer) || (auth === currentPeer && recv === myEmail)) {
+                    render(m);
+                }
+                loadHistory(); // Обновляем список чатов слева
+            })
+            .subscribe();
 
         function goBack() { 
             document.body.classList.remove('chat-open'); 
@@ -367,7 +379,7 @@ document.getElementById('msg-form').onsubmit = async (e) => {
             updateChatListUI();
         }
         
-        init();
+        init(); // Теперь эта функция точно запустится!
     </script>
 </body>
 </html>
