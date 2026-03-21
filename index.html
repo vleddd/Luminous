@@ -218,55 +218,44 @@
             photoModal.style.display = 'none';
         }
 
-async function sendWithFile() {
-    const file = fileInput.files[0];
-    const text = modalCaption.value.trim();
-    if (!file || !currentPeer) return;
+        async function sendWithFile() {
+            const file = fileInput.files[0];
+            const text = modalCaption.value.trim();
+            if (!file || !currentPeer) return;
 
-    const btn = document.getElementById('modal-send-btn');
-    btn.innerText = "ЗАГРУЗКА...";
-    btn.disabled = true;
+            const btn = document.getElementById('modal-send-btn');
+            btn.innerText = "ЗАГРУЗКА...";
+            btn.disabled = true;
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `${myEmail}/${fileName}`;
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
+            const filePath = `${myEmail}/${fileName}`;
 
-    // 1. Загружаем файл
-    const { data: uploadData, error: uploadError } = await _sup.storage
-        .from('uploads')
-        .upload(filePath, file);
+            const { data: uploadData, error: uploadError } = await _sup.storage.from('uploads').upload(filePath, file);
 
-    if (uploadError) {
-        console.error("Storage Error:", uploadError);
-        alert("Ошибка загрузки: " + uploadError.message);
-        btn.innerText = "ОТПРАВИТЬ";
-        btn.disabled = false;
-        return;
-    }
-
-    // 2. Получаем публичную ссылку
-    const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(filePath);
-    
-    // 3. Записываем в таблицу (ОБЯЗАТЕЛЬНО проверяем результат insert)
-    const { error: insertError } = await _sup.from('messages').insert([{ 
-        text: text, 
-        author_email: myEmail, 
-        receiver_email: currentPeer,
-        is_read: false,
-        file_url: [publicUrl], // Передаем как массив
-        file_type: file.type,
-        created_at: new Date().toISOString()
-    }]);
-
-    if (insertError) {
-        console.error("Insert Error:", insertError);
-        alert("Ошибка сохранения сообщения: " + insertError.message);
-    }
-    
-    btn.innerText = "ОТПРАВИТЬ";
-    btn.disabled = false;
-    cancelFile();
-}
+            if (uploadError) {
+                alert("Ошибка загрузки: " + uploadError.message);
+                btn.innerText = "ОТПРАВИТЬ";
+                btn.disabled = false;
+            } else {
+                // ПОЛУЧАЕМ ПУБЛИЧНУЮ ССЫЛКУ
+                const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(filePath);
+                
+                // ВАЖНО: записываем в массив, чтобы SQL не ругался
+                await _sup.from('messages').insert([{ 
+                    text: text, 
+                    author_email: myEmail, 
+                    receiver_email: currentPeer,
+                    is_read: false,
+                    file_url: [publicUrl],
+                    file_type: file.type,
+                    created_at: new Date().toISOString()
+                }]);
+                
+                btn.innerText = "ОТПРАВИТЬ";
+                btn.disabled = false;
+                cancelFile();
+            }
         }
 
         document.getElementById('modal-send-btn').onclick = sendWithFile;
@@ -385,47 +374,30 @@ async function sendWithFile() {
         }
 
         function render(m) {
-    renderDateDivider(m.created_at);
-    const isMine = m.author_email.toLowerCase() === myEmail;
-    const div = document.createElement('div');
-    div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
-    
-    let fHtml = "";
-    
-    // Проверяем наличие file_url и извлекаем строку
-    if (m.file_url) {
-        let rawUrl = "";
-        if (Array.isArray(m.file_url) && m.file_url.length > 0) {
-            rawUrl = m.file_url[0];
-        } else if (typeof m.file_url === 'string') {
-            rawUrl = m.file_url;
+            renderDateDivider(m.created_at);
+            const isMine = m.author_email.toLowerCase() === myEmail;
+            const div = document.createElement('div');
+            div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
+            
+            let fHtml = "";
+            if (m.file_url) {
+                // Умная обработка URL (извлекаем из массива или строки и чистим от фигурных скобок)
+                let rawUrl = Array.isArray(m.file_url) ? m.file_url[0] : m.file_url;
+                if (rawUrl) {
+                    const cleanUrl = String(rawUrl).replace(/{|}/g, "");
+                    if (cleanUrl.startsWith('http')) {
+                        fHtml = `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}')">`;
+                    }
+                }
+            }
+
+            const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            const tick = isMine ? (m.is_read ? '✓✓' : '✓') : '';
+            
+            div.innerHTML = `${fHtml}<div style="white-space: pre-wrap;">${m.text || ""}</div><div class="msg-info"><span>${time}</span> <span style="font-weight:bold; color:#58BFFF;">${tick}</span></div>`;
+            document.getElementById('messages').appendChild(div);
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
         }
-
-        // Чистим ссылку от лишних символов, если они прилетели из БД (бывает с Postgres массивами)
-        const cleanUrl = rawUrl.replace(/{|}/g, ""); 
-
-        if (cleanUrl && cleanUrl.startsWith('http')) {
-            fHtml = `<img src="${cleanUrl}" 
-                         style="max-width:100%; border-radius:12px; margin-bottom:5px; cursor:pointer;" 
-                         onclick="window.open('${cleanUrl}')"
-                         onerror="this.style.display='none'">`;
-        }
-    }
-
-    const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    const tick = isMine ? (m.is_read ? '✓✓' : '✓') : '';
-    
-    div.innerHTML = `
-        ${fHtml}
-        <div style="white-space: pre-wrap;">${m.text || ""}</div>
-        <div class="msg-info">
-            <span>${time}</span> 
-            <span style="font-weight:bold; color:#58BFFF;">${tick}</span>
-        </div>`;
-        
-    document.getElementById('messages').appendChild(div);
-    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-}
 
         async function getProfileName(email) {
             if (profileCache[email]) return profileCache[email];
