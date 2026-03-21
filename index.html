@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v0.7 - Final Evolution</title>
+    <title>Luminous v0.7 - Multi-Photo</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #25272D; color: #fff; height: 100dvh; display: flex; overflow: hidden; }
@@ -49,8 +49,8 @@
             overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1);
         }
         .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .modal-body { padding: 10px; text-align: center; background: #1a1b1e; }
-        .modal-body img { max-width: 100%; max-height: 50vh; border-radius: 12px; object-fit: contain; }
+        .modal-body { padding: 10px; text-align: center; background: #1a1b1e; max-height: 60vh; overflow-y: auto; }
+        .modal-body img { max-width: 100%; border-radius: 12px; object-fit: contain; margin-bottom: 10px; }
         .modal-footer { padding: 15px 20px; background: #2E3037; display: flex; gap: 12px; align-items: center; }
         #modal-caption { background: #23242A; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; padding: 10px 15px; border-radius: 12px; }
         .modal-send-btn { background: #7058c9; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
@@ -80,7 +80,14 @@
         .msg-theirs { align-self: flex-start; background: #191a1d; border-radius: 18px 18px 18px 4px; }
         .msg-mine { align-self: flex-end; background: #7058c9; border-radius: 18px 18px 4px 18px; }
 
-        .msg img { width: 100%; height: auto; border-radius: 12px; display: block; margin-bottom: 6px; cursor: pointer; object-fit: contain; background: rgba(0,0,0,0.1); }
+        /* СЕТКА ФОТО */
+        .photo-grid { display: grid; gap: 4px; margin-bottom: 6px; border-radius: 12px; overflow: hidden; width: 100%; max-width: 320px; }
+        .photo-grid img { width: 100%; height: 160px; object-fit: cover; cursor: pointer; display: block; background: rgba(0,0,0,0.1); }
+        .grid-1 img { height: auto; max-height: 300px; object-fit: contain; }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr; }
+        .grid-3 img:first-child { grid-column: span 2; height: 180px; }
+        .grid-4 { grid-template-columns: 1fr 1fr; }
 
         .input-area { padding: 10px 20px; display: flex; align-items: center; gap: 12px; background: #2E3037; }
         .input-wrapper { background: #23242A; flex-grow: 1; border-radius: 15px; padding: 12px 15px; display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.05); }
@@ -117,9 +124,8 @@
                 <span style="font-weight: bold;">Отправить фото</span>
                 <span onclick="cancelFile()" style="cursor: pointer; font-size: 24px;">×</span>
             </div>
-            <div class="modal-body">
-                <img id="modal-img-preview" src="">
-            </div>
+            <div class="modal-body" id="modal-preview-container">
+                </div>
             <div class="modal-footer">
                 <input id="modal-caption" placeholder="Добавьте подпись..." autocomplete="off">
                 <button class="modal-send-btn" id="modal-send-btn">ОТПРАВИТЬ</button>
@@ -159,7 +165,7 @@
                 <div style="font-size: 20px; cursor: pointer; opacity: 0.7;">😊</div>
                 <input id="input" placeholder="Message" autocomplete="off">
                 <label for="file-input" style="font-size: 20px; cursor: pointer; transform: rotate(45deg); opacity: 0.7;">📎</label>
-                <input type="file" id="file-input" style="display:none" accept="image/*">
+                <input type="file" id="file-input" style="display:none" accept="image/*" multiple>
             </div>
             <button type="submit" class="send-btn">➤</button>
         </form>
@@ -173,8 +179,8 @@
 
         const fileInput = document.getElementById('file-input');
         const photoModal = document.getElementById('photo-modal');
-        const modalImg = document.getElementById('modal-img-preview');
         const modalCaption = document.getElementById('modal-caption');
+        const previewContainer = document.getElementById('modal-preview-container');
 
         async function init() {
             const { data: { session } } = await _sup.auth.getSession();
@@ -204,12 +210,18 @@
         }
 
         fileInput.onchange = () => {
-            const file = fileInput.files[0];
-            if (!file) return;
-            if (file.type.startsWith('image/')) {
-                modalImg.src = URL.createObjectURL(file);
-                photoModal.style.display = 'flex';
-            }
+            const files = fileInput.files;
+            if (files.length === 0) return;
+            
+            previewContainer.innerHTML = "";
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    previewContainer.appendChild(img);
+                }
+            });
+            photoModal.style.display = 'flex';
         };
 
         function cancelFile() {
@@ -219,9 +231,9 @@
         }
 
         async function sendWithFile() {
-            const file = fileInput.files[0];
+            const files = fileInput.files;
             const text = modalCaption.value.trim();
-            if (!file || !currentPeer) return;
+            if (files.length === 0 || !currentPeer) return;
 
             const btn = document.getElementById('modal-send-btn');
             const originalBtnText = btn.innerText;
@@ -229,25 +241,30 @@
             btn.disabled = true;
 
             try {
-                const fileExt = file.name.split('.').pop();
-                const fileName = `img_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
-                
-                const { data: uploadData, error: uploadError } = await _sup.storage
-                    .from('uploads')
-                    .upload(fileName, file);
+                let uploadedUrls = [];
 
-                if (uploadError) throw uploadError;
+                // Загружаем все файлы
+                for (let file of files) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `img_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+                    
+                    const { data: uploadData, error: uploadError } = await _sup.storage
+                        .from('uploads')
+                        .upload(fileName, file);
 
-                const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
+                    if (uploadError) throw uploadError;
+
+                    const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
+                    uploadedUrls.push(publicUrl);
+                }
                 
-                // ВАЖНО: записываем publicUrl как строку для типа TEXT в БД
                 const { error: insertError } = await _sup.from('messages').insert([{ 
                     text: text || null, 
                     author_email: myEmail, 
                     receiver_email: currentPeer,
                     is_read: false,
-                    file_url: publicUrl, // Теперь это строка, а не массив
-                    file_type: file.type,
+                    file_url: uploadedUrls, // Теперь отправляем массив
+                    file_type: files[0].type,
                     created_at: new Date().toISOString()
                 }]);
 
@@ -256,7 +273,7 @@
                 cancelFile();
             } catch (err) {
                 console.error("Ошибка загрузки:", err);
-                alert("Ошибка: " + (err.message || "Не удалось загрузить файл"));
+                alert("Ошибка: " + (err.message || "Не удалось загрузить файлы"));
             } finally {
                 btn.innerText = originalBtnText;
                 btn.disabled = false;
@@ -386,13 +403,17 @@
             
             let fHtml = "";
             if (m.file_url) {
-                // Поддержка и старого формата (массив), и нового (строка)
-                let rawUrl = Array.isArray(m.file_url) ? m.file_url[0] : m.file_url;
-                if (rawUrl) {
-                    const cleanUrl = String(rawUrl).replace(/[{}"]/g, "").split(',')[0].trim();
-                    if (cleanUrl.startsWith('http')) {
-                        fHtml = `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}', '_blank')" onerror="this.style.display='none'">`;
-                    }
+                // Преобразуем в массив, если пришла строка (для совместимости)
+                const urls = Array.isArray(m.file_url) ? m.file_url : [m.file_url];
+                const count = urls.length;
+                
+                if (count > 0) {
+                    fHtml = `<div class="photo-grid grid-${Math.min(count, 4)}">`;
+                    urls.forEach(url => {
+                        const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
+                        fHtml += `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}', '_blank')" onerror="this.style.display='none'">`;
+                    });
+                    fHtml += `</div>`;
                 }
             }
 
