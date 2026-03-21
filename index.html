@@ -167,6 +167,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // Конфигурация клиента
         const _sup = supabase.createClient('https://rlbrnsjluipocxommmvx.supabase.co', 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG');
 
         let myEmail = "", currentPeer = null, profileCache = {}, lastRenderedDate = null, chatToDelete = null, pressTimer = null;
@@ -224,35 +225,46 @@
             if (!file || !currentPeer) return;
 
             const btn = document.getElementById('modal-send-btn');
+            const originalBtnText = btn.innerText;
             btn.innerText = "ЗАГРУЗКА...";
             btn.disabled = true;
 
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}.${fileExt}`;
-            const filePath = `${myEmail}/${fileName}`;
+            try {
+                // Создаем уникальное имя файла, чтобы избежать ошибок при загрузке
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+                const filePath = `${myEmail}/${fileName}`;
 
-            const { data: uploadData, error: uploadError } = await _sup.storage.from('uploads').upload(filePath, file);
+                // 1. Загрузка в Storage
+                const { data: uploadData, error: uploadError } = await _sup.storage
+                    .from('uploads')
+                    .upload(filePath, file);
 
-            if (uploadError) {
-                alert("Ошибка загрузки: " + uploadError.message);
-                btn.innerText = "ОТПРАВИТЬ";
-                btn.disabled = false;
-            } else {
+                if (uploadError) throw uploadError;
+
+                // 2. Получение публичной ссылки
                 const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(filePath);
                 
-                await _sup.from('messages').insert([{ 
-                    text: text, 
+                // 3. Вставка записи в таблицу (file_url как массив)
+                const { error: insertError } = await _sup.from('messages').insert([{ 
+                    text: text || null, 
                     author_email: myEmail, 
                     receiver_email: currentPeer,
                     is_read: false,
-                    file_url: [publicUrl], // Отправляем как массив
+                    file_url: [publicUrl], 
                     file_type: file.type,
                     created_at: new Date().toISOString()
                 }]);
+
+                if (insertError) throw insertError;
                 
-                btn.innerText = "ОТПРАВИТЬ";
-                btn.disabled = false;
                 cancelFile();
+            } catch (err) {
+                console.error("Ошибка при отправке файла:", err);
+                alert("Не удалось отправить: " + err.message);
+            } finally {
+                btn.innerText = originalBtnText;
+                btn.disabled = false;
             }
         }
 
@@ -335,7 +347,7 @@
 
             const hidden = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
             const emails = [...new Set(msgs.map(m => m.author_email.toLowerCase() === myEmail ? m.receiver_email.toLowerCase() : m.author_email.toLowerCase()))]
-                           .filter(e => !hidden.includes(e));
+                            .filter(e => !hidden.includes(e));
 
             list.innerHTML = "";
             for (const email of emails) {
@@ -379,10 +391,10 @@
             
             let fHtml = "";
             if (m.file_url) {
-                // Магия очистки URL от скобок Postgres {}
+                // Извлекаем URL и чистим его от возможных скобок БД {}
                 let rawUrl = Array.isArray(m.file_url) ? m.file_url[0] : m.file_url;
                 if (rawUrl) {
-                    const cleanUrl = String(rawUrl).replace(/{|}/g, "").split(',')[0];
+                    const cleanUrl = String(rawUrl).replace(/{|}/g, "").split(',')[0].trim();
                     if (cleanUrl.startsWith('http')) {
                         fHtml = `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}', '_blank')" onerror="this.style.display='none'">`;
                     }
@@ -417,8 +429,8 @@
         document.getElementById('msg-form').onsubmit = async (e) => {
             e.preventDefault();
             const i = document.getElementById('input');
-            if (i.value.trim() && currentPeer) {
-                const text = i.value;
+            const text = i.value.trim();
+            if (text && currentPeer) {
                 i.value = ""; 
                 await _sup.from('messages').insert([{ 
                     text: text, 
