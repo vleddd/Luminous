@@ -167,7 +167,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Конфигурация клиента
         const _sup = supabase.createClient('https://rlbrnsjluipocxommmvx.supabase.co', 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG');
 
         let myEmail = "", currentPeer = null, profileCache = {}, lastRenderedDate = null, chatToDelete = null, pressTimer = null;
@@ -230,28 +229,27 @@
             btn.disabled = true;
 
             try {
-                // Создаем уникальное имя файла, чтобы избежать ошибок при загрузке
+                // Генерируем чистое имя файла без папок для теста стабильности
                 const fileExt = file.name.split('.').pop();
-                const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
-                const filePath = `${myEmail}/${fileName}`;
-
-                // 1. Загрузка в Storage
+                const fileName = `img_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+                
+                // Загружаем напрямую в корень бакета 'uploads'
                 const { data: uploadData, error: uploadError } = await _sup.storage
                     .from('uploads')
-                    .upload(filePath, file);
+                    .upload(fileName, file);
 
                 if (uploadError) throw uploadError;
 
-                // 2. Получение публичной ссылки
-                const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(filePath);
+                // Получаем URL
+                const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
                 
-                // 3. Вставка записи в таблицу (file_url как массив)
+                // Вставляем сообщение в базу
                 const { error: insertError } = await _sup.from('messages').insert([{ 
                     text: text || null, 
                     author_email: myEmail, 
                     receiver_email: currentPeer,
                     is_read: false,
-                    file_url: [publicUrl], 
+                    file_url: [publicUrl], // Храним как массив
                     file_type: file.type,
                     created_at: new Date().toISOString()
                 }]);
@@ -260,8 +258,8 @@
                 
                 cancelFile();
             } catch (err) {
-                console.error("Ошибка при отправке файла:", err);
-                alert("Не удалось отправить: " + err.message);
+                console.error("Ошибка загрузки:", err);
+                alert("Ошибка: " + (err.message || "Не удалось загрузить файл"));
             } finally {
                 btn.innerText = originalBtnText;
                 btn.disabled = false;
@@ -391,10 +389,10 @@
             
             let fHtml = "";
             if (m.file_url) {
-                // Извлекаем URL и чистим его от возможных скобок БД {}
+                // Чистим URL от скобок Postgres и берем первый элемент
                 let rawUrl = Array.isArray(m.file_url) ? m.file_url[0] : m.file_url;
                 if (rawUrl) {
-                    const cleanUrl = String(rawUrl).replace(/{|}/g, "").split(',')[0].trim();
+                    const cleanUrl = String(rawUrl).replace(/[{}"]/g, "").split(',')[0].trim();
                     if (cleanUrl.startsWith('http')) {
                         fHtml = `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}', '_blank')" onerror="this.style.display='none'">`;
                     }
