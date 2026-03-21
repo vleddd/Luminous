@@ -78,6 +78,7 @@
             #main-chat { width: 100%; position: absolute; height: 100%; z-index: 20; transform: translateX(100%); transition: 0.25s ease; }
             body.chat-open #main-chat { transform: translateX(0); }
             .input-area { padding: 10px; }
+            #back-mobile { display: block !important; }
         }
     </style>
 </head>
@@ -133,68 +134,33 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Подключаем клиент Supabase (твои ключи уже тут)
-const _sup = supabase.createClient('https://rlbrnsjluipocxommmvx.supabase.co', 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG');
+        const _sup = supabase.createClient('https://rlbrnsjluipocxommmvx.supabase.co', 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG');
 
-let myEmail = "", currentPeer = null, profileCache = {};
-
-async function init() {
-    const { data: { session } } = await _sup.auth.getSession();
-    if (session) {
-        myEmail = session.user.email.toLowerCase().trim();
-        document.getElementById('auth-overlay').style.display = 'none';
-        
-        // --- ВОТ ТУТ МАГИЯ REALTIME (ЗАМЕНА SOCKET.IO) ---
-        _sup.channel('messages-realtime')
-            .on('postgres_changes', { 
-                event: 'INSERT', 
-                schema: 'public', 
-                table: 'messages' 
-            }, payload => {
-                const m = payload.new;
-                // Если сообщение для нас или от нас в текущем чате — рисуем
-                if ((m.author_email === myEmail && m.receiver_email === currentPeer) || 
-                    (m.author_email === currentPeer && m.receiver_email === myEmail)) {
-                    render(m);
-                }
-                loadHistory(); // Обновляем список чатов слева
-            })
-            .subscribe();
-
-        loadHistory(); 
-    } else {
-        document.getElementById('auth-overlay').style.display = 'flex';
-    }
-}
-
-// Отправка сообщения напрямую в базу
-document.getElementById('msg-form').onsubmit = async (e) => {
-    e.preventDefault();
-    const i = document.getElementById('input');
-    if (i.value.trim() && currentPeer) {
-        const text = i.value;
-        i.value = ""; 
-
-        // Просто вставляем строку в таблицу, Supabase сам раздаст её через Realtime
-        await _sup.from('messages').insert([{ 
-            text: text, 
-            author_email: myEmail, 
-            receiver_email: currentPeer,
-            is_read: false
-        }]);
-    }
-};
-
-// ... (оставь свои функции render, loadHistory, handleAuth, они будут работать через _sup)
+        let myEmail = "", currentPeer = null, profileCache = {}, lastRenderedDate = null, chatToDelete = null, pressTimer = null;
 
         async function init() {
             const { data: { session } } = await _sup.auth.getSession();
             if (session) {
                 myEmail = session.user.email.toLowerCase().trim();
                 document.getElementById('auth-overlay').style.display = 'none';
-                socket.emit('join', myEmail);
+                
+                // Realtime подписка
+                _sup.channel('messages-realtime')
+                    .on('postgres_changes', { 
+                        event: 'INSERT', 
+                        schema: 'public', 
+                        table: 'messages' 
+                    }, payload => {
+                        const m = payload.new;
+                        if ((m.author_email === myEmail && m.receiver_email === currentPeer) || 
+                            (m.author_email === currentPeer && m.receiver_email === myEmail)) {
+                            render(m);
+                        }
+                        loadHistory(); 
+                    })
+                    .subscribe();
+
                 loadHistory(); 
             } else {
                 document.getElementById('auth-overlay').style.display = 'flex';
@@ -250,10 +216,7 @@ document.getElementById('msg-form').onsubmit = async (e) => {
             currentPeer = email;
             lastRenderedDate = null;
             
-            // Показываем чат на мобилках
             document.body.classList.add('chat-open');
-            if(window.innerWidth <= 768) document.getElementById('back-mobile').style.display = 'block';
-            
             const name = await getProfileName(email);
             document.getElementById('chat-title').innerText = name;
             document.getElementById('header-av').innerText = name[0];
@@ -293,7 +256,6 @@ document.getElementById('msg-form').onsubmit = async (e) => {
                 item.onclick = () => openChat(email);
                 item.oncontextmenu = (e) => { e.preventDefault(); openDeleteMenu(email); };
                 
-                // Для мобилок (долгий тап)
                 item.ontouchstart = () => pressTimer = setTimeout(() => openDeleteMenu(email), 600);
                 item.ontouchend = () => clearTimeout(pressTimer);
 
@@ -338,40 +300,28 @@ document.getElementById('msg-form').onsubmit = async (e) => {
 
         async function getProfileName(email) {
             if (profileCache[email]) return profileCache[email];
-            // ВАЖНО: Проверь название таблицы в Supabase (user_profiles или profiles)
-            const { data } = await _sup.from('user_profiles').select('display_name').eq('email', email).single();
+            const { data } = await _sup.from('useprofiles').select('display_name').eq('email', email).maybeSingle();
             const name = data?.display_name || email.split('@')[0];
             profileCache[email] = name;
             return name;
         }
 
-        document.getElementById('msg-form').onsubmit = (e) => {
+        // Исправленная отправка сообщений
+        document.getElementById('msg-form').onsubmit = async (e) => {
             e.preventDefault();
             const i = document.getElementById('input');
             if (i.value.trim() && currentPeer) {
-                socket.emit('chat message', { text: i.value, user: myEmail, to: currentPeer });
-                i.value = "";
+                const text = i.value;
+                i.value = ""; 
+                await _sup.from('messages').insert([{ 
+                    text: text, 
+                    author_email: myEmail, 
+                    receiver_email: currentPeer,
+                    is_read: false,
+                    created_at: new Date().toISOString()
+                }]);
             }
         };
-
-// --- ЗАМЕНИ СВОЙ СТАРЫЙ БЛОК SOCKET.ON НА ЭТОТ ---
-        const channel = _sup.channel('public:messages')
-            .on('postgres_changes', { 
-                event: 'INSERT', 
-                schema: 'public', 
-                table: 'messages' 
-            }, payload => {
-                const m = payload.new;
-                const auth = m.author_email.toLowerCase();
-                const recv = m.receiver_email.toLowerCase();
-                
-                // Проверяем, нужно ли отрисовать сообщение в текущем чате
-                if ((auth === myEmail && recv === currentPeer) || (auth === currentPeer && recv === myEmail)) {
-                    render(m);
-                }
-                loadHistory(); // Обновляем список чатов слева
-            })
-            .subscribe();
 
         function goBack() { 
             document.body.classList.remove('chat-open'); 
@@ -379,7 +329,7 @@ document.getElementById('msg-form').onsubmit = async (e) => {
             updateChatListUI();
         }
         
-        init(); // Теперь эта функция точно запустится!
+        init();
     </script>
 </body>
 </html>
