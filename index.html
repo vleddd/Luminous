@@ -240,13 +240,12 @@
             } else {
                 const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(filePath);
                 
-                // Записываем данные. Если в БД file_url это text[], передаем [publicUrl]. Если text - просто publicUrl.
                 await _sup.from('messages').insert([{ 
                     text: text, 
                     author_email: myEmail, 
                     receiver_email: currentPeer,
                     is_read: false,
-                    file_url: [publicUrl],
+                    file_url: [publicUrl], // Отправляем как массив
                     file_type: file.type,
                     created_at: new Date().toISOString()
                 }]);
@@ -380,20 +379,18 @@
             
             let fHtml = "";
             if (m.file_url) {
-                // Извлекаем URL из массива или строки и чистим от фигурных скобок PostgreSQL
+                // Магия очистки URL от скобок Postgres {}
                 let rawUrl = Array.isArray(m.file_url) ? m.file_url[0] : m.file_url;
                 if (rawUrl) {
-                    const cleanUrl = String(rawUrl).replace(/{|}/g, "");
-                    if (cleanUrl.includes("http")) {
-                        fHtml = `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}')" onerror="this.style.display='none'">`;
+                    const cleanUrl = String(rawUrl).replace(/{|}/g, "").split(',')[0];
+                    if (cleanUrl.startsWith('http')) {
+                        fHtml = `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}', '_blank')" onerror="this.style.display='none'">`;
                     }
                 }
             }
 
             const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
             const tick = isMine ? (m.is_read ? '✓✓' : '✓') : '';
-            
-            // Если есть текст, оборачиваем его, если нет - оставляем только картинку
             const textContent = m.text ? `<div style="white-space: pre-wrap;">${m.text}</div>` : "";
             
             div.innerHTML = `
@@ -404,8 +401,9 @@
                     <span style="font-weight:bold; color:#58BFFF;">${tick}</span>
                 </div>`;
                 
-            document.getElementById('messages').appendChild(div);
-            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+            const msgBox = document.getElementById('messages');
+            msgBox.appendChild(div);
+            msgBox.scrollTop = msgBox.scrollHeight;
         }
 
         async function getProfileName(email) {
