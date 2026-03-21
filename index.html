@@ -3,51 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v0.7 - Final Evolution</title>
+    <title>Luminous v0.7 - Fixed Edition</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #25272D; color: #fff; height: 100dvh; display: flex; overflow: hidden; }
 
         /* ОКНО РЕГИСТРАЦИИ */
-        #auth-overlay { 
-            position: fixed; inset: 0; background: #1E1F23; z-index: 10000; 
-            display: none; align-items: center; justify-content: center; 
-        }
-        .auth-card { 
-            background: #2E3037; padding: 35px; border-radius: 24px; width: 340px; 
-            border: 1px solid rgba(255,255,255,0.1); text-align: center; 
-        }
-        .auth-input { 
-            width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 12px; 
-            border: none; background: #23242A; color: #fff; outline: none; font-size: 16px; 
-        }
-        .auth-btn { 
-            width: 100%; padding: 12px; background: #7058c9; color: white; border: none; 
-            border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; 
-        }
+        #auth-overlay { position: fixed; inset: 0; background: #1E1F23; z-index: 10000; display: none; align-items: center; justify-content: center; }
+        .auth-card { background: #2E3037; padding: 35px; border-radius: 24px; width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .auth-input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 12px; border: none; background: #23242A; color: #fff; outline: none; font-size: 16px; }
+        .auth-btn { width: 100%; padding: 12px; background: #7058c9; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .auth-secondary { background: transparent; color: #6EBDFD; border: 1px solid #6EBDFD; }
 
         /* МОДАЛКА УДАЛЕНИЯ */
-        #delete-modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 20000;
-            display: none; align-items: center; justify-content: center; padding: 20px;
-        }
-        .delete-card {
-            background: #2E3037; padding: 25px; border-radius: 24px; width: 100%; max-width: 340px;
-            border: 1px solid rgba(255,255,255,0.1); text-align: center;
-        }
+        #delete-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .delete-card { background: #2E3037; padding: 25px; border-radius: 24px; width: 100%; max-width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
         .del-btn-red { width: 100%; padding: 12px; background: #ff4d4d; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .del-btn-gray { width: 100%; padding: 12px; background: #3D3F46; color: white; border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px; }
 
         /* МОДАЛКА ПРЕДПРОСМОТРА ФОТО */
-        #photo-modal {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 30000;
-            display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
-        }
-        .modal-content {
-            background: #2E3037; border-radius: 24px; width: 100%; max-width: 450px;
-            overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1);
-        }
+        #photo-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 30000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: #2E3037; border-radius: 24px; width: 100%; max-width: 450px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1); }
         .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .modal-body { padding: 10px; text-align: center; background: #1a1b1e; }
         .modal-body img { max-width: 100%; max-height: 50vh; border-radius: 12px; object-fit: contain; }
@@ -60,40 +36,30 @@
         .sidebar-header { padding: 10px; background: #252935; display: flex; align-items: center; gap: 10px; border-radius: 10px; margin: 5px; }
         #search-input { background: #33353B; border: none; border-radius: 40px; color: #fff; outline: none; padding: 8px 15px; flex-grow: 1; font-size: 14px; }
         #chat-list { overflow-y: auto; flex-grow: 1; padding: 10px; }
-
-        .chat-item {
-            background: transparent; border-radius: 15px; margin-bottom: 8px; padding: 10px; 
-            display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s;
-            user-select: none;
-        }
+        .chat-item { background: transparent; border-radius: 15px; margin-bottom: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; user-select: none; }
         .chat-item.active { background: #34373F !important; border: 1px solid #565C69; }
 
         /* ОКНО ЧАТА */
         #main-chat { flex-grow: 1; display: flex; flex-direction: column; background: #2E3037; position: relative; }
         #chat-header { padding: 10px 20px; background: #25272D; display: flex; align-items: center; gap: 12px; height: 60px; margin: 5px; border-radius: 10px; }
         #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-
         .date-divider { align-self: center; background: rgba(0,0,0,0.2); color: #BAC1F3; padding: 5px 15px; border-radius: 20px; font-size: 12px; margin: 15px 0; font-weight: 500; opacity: 0.8; }
-
         .msg { width: fit-content; min-width: 80px; max-width: 85%; padding: 10px 14px; font-size: 15px; word-wrap: break-word; display: flex; flex-direction: column; }
         .msg-info { font-size: 10px; opacity: 0.5; margin-top: 4px; align-self: flex-end; display: flex; gap: 4px; }
         .msg-theirs { align-self: flex-start; background: #191a1d; border-radius: 18px 18px 18px 4px; }
         .msg-mine { align-self: flex-end; background: #7058c9; border-radius: 18px 18px 4px 18px; }
-
-        .msg img { width: 100%; height: auto; border-radius: 12px; display: block; margin-bottom: 6px; cursor: pointer; object-fit: contain; }
+        .msg img { width: 100%; max-width: 250px; height: auto; border-radius: 12px; display: block; margin-bottom: 6px; cursor: pointer; object-fit: contain; background: #000; }
 
         .input-area { padding: 10px 20px; display: flex; align-items: center; gap: 12px; background: #2E3037; }
         .input-wrapper { background: #23242A; flex-grow: 1; border-radius: 15px; padding: 12px 15px; display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.05); }
         #input { background: none; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; }
         .send-btn { color: #6EBDFD; font-size: 28px; cursor: pointer; background: none; border: none; display: flex; align-items: center; transition: 0.2s; }
-
         .avatar { width: 40px; height: 40px; border-radius: 50%; background: #E0E2E5; color: #444; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; text-transform: uppercase; }
 
         @media (max-width: 768px) {
             #sidebar { width: 100%; position: absolute; height: 100%; z-index: 10; }
             #main-chat { width: 100%; position: absolute; height: 100%; z-index: 20; transform: translateX(100%); transition: 0.25s ease; }
             body.chat-open #main-chat { transform: translateX(0); }
-            .input-area { padding: 10px; }
             #back-mobile { display: block !important; }
         }
     </style>
@@ -117,9 +83,7 @@
                 <span style="font-weight: bold;">Отправить фото</span>
                 <span onclick="cancelFile()" style="cursor: pointer; font-size: 24px;">×</span>
             </div>
-            <div class="modal-body">
-                <img id="modal-img-preview" src="">
-            </div>
+            <div class="modal-body"><img id="modal-img-preview" src=""></div>
             <div class="modal-footer">
                 <input id="modal-caption" placeholder="Добавьте подпись..." autocomplete="off">
                 <button class="modal-send-btn" id="modal-send-btn">ОТПРАВИТЬ</button>
@@ -168,7 +132,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const _sup = supabase.createClient('https://rlbrnsjluipocxommmvx.supabase.co', 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG');
-
         let myEmail = "", currentPeer = null, profileCache = {}, lastRenderedDate = null, chatToDelete = null, pressTimer = null;
 
         const fileInput = document.getElementById('file-input');
@@ -181,89 +144,46 @@
             if (session) {
                 myEmail = session.user.email.toLowerCase().trim();
                 document.getElementById('auth-overlay').style.display = 'none';
-                
-                _sup.channel('messages-realtime')
-                    .on('postgres_changes', { 
-                        event: 'INSERT', 
-                        schema: 'public', 
-                        table: 'messages' 
-                    }, payload => {
-                        const m = payload.new;
-                        if ((m.author_email === myEmail && m.receiver_email === currentPeer) || 
-                            (m.author_email === currentPeer && m.receiver_email === myEmail)) {
-                            render(m);
-                        }
-                        loadHistory(); 
-                    })
-                    .subscribe();
-
+                _sup.channel('messages-realtime').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                    const m = payload.new;
+                    if ((m.author_email === myEmail && m.receiver_email === currentPeer) || (m.author_email === currentPeer && m.receiver_email === myEmail)) { render(m); }
+                    loadHistory(); 
+                }).subscribe();
                 loadHistory(); 
-            } else {
-                document.getElementById('auth-overlay').style.display = 'flex';
-            }
+            } else { document.getElementById('auth-overlay').style.display = 'flex'; }
         }
 
         fileInput.onchange = () => {
             const file = fileInput.files[0];
-            if (!file) return;
-            if (file.type.startsWith('image/')) {
+            if (file && file.type.startsWith('image/')) {
                 modalImg.src = URL.createObjectURL(file);
                 photoModal.style.display = 'flex';
             }
         };
 
-        function cancelFile() {
-            fileInput.value = "";
-            modalCaption.value = "";
-            photoModal.style.display = 'none';
-        }
+        function cancelFile() { fileInput.value = ""; modalCaption.value = ""; photoModal.style.display = 'none'; }
 
         async function sendWithFile() {
             const file = fileInput.files[0];
             const text = modalCaption.value.trim();
             if (!file || !currentPeer) return;
-
             const btn = document.getElementById('modal-send-btn');
-            const originalBtnText = btn.innerText;
-            btn.innerText = "ЗАГРУЗКА...";
-            btn.disabled = true;
+            btn.innerText = "ЗАГРУЗКА..."; btn.disabled = true;
 
             try {
-                // Генерируем чистое имя файла без папок для теста стабильности
-                const fileExt = file.name.split('.').pop();
-                const fileName = `img_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
-                
-                // Загружаем напрямую в корень бакета 'uploads'
-                const { data: uploadData, error: uploadError } = await _sup.storage
-                    .from('uploads')
-                    .upload(fileName, file);
-
+                const fileName = `img_${Date.now()}.${file.name.split('.').pop()}`;
+                const { error: uploadError } = await _sup.storage.from('uploads').upload(fileName, file);
                 if (uploadError) throw uploadError;
 
-                // Получаем URL
                 const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
                 
-                // Вставляем сообщение в базу
-                const { error: insertError } = await _sup.from('messages').insert([{ 
-                    text: text || null, 
-                    author_email: myEmail, 
-                    receiver_email: currentPeer,
-                    is_read: false,
-                    file_url: [publicUrl], // Храним как массив
-                    file_type: file.type,
-                    created_at: new Date().toISOString()
+                // ВАЖНО: записываем publicUrl как строку, а не массив [publicUrl]
+                await _sup.from('messages').insert([{ 
+                    text: text || null, author_email: myEmail, receiver_email: currentPeer,
+                    file_url: publicUrl, file_type: file.type, created_at: new Date().toISOString()
                 }]);
-
-                if (insertError) throw insertError;
-                
                 cancelFile();
-            } catch (err) {
-                console.error("Ошибка загрузки:", err);
-                alert("Ошибка: " + (err.message || "Не удалось загрузить файл"));
-            } finally {
-                btn.innerText = originalBtnText;
-                btn.disabled = false;
-            }
+            } catch (err) { alert("Ошибка: " + err.message); } finally { btn.innerText = "ОТПРАВИТЬ"; btn.disabled = false; }
         }
 
         document.getElementById('modal-send-btn').onclick = sendWithFile;
@@ -271,83 +191,32 @@
         async function handleAuth(type) {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-pass').value;
-            const errorEl = document.getElementById('auth-error');
-            let res = type === 'register' 
-                ? await _sup.auth.signUp({ email, password }) 
-                : await _sup.auth.signInWithPassword({ email, password });
-
-            if (res.error) {
-                errorEl.innerText = res.error.message;
-                errorEl.style.display = 'block';
-            } else {
-                location.reload();
-            }
+            let res = type === 'register' ? await _sup.auth.signUp({ email, password }) : await _sup.auth.signInWithPassword({ email, password });
+            if (res.error) { document.getElementById('auth-error').innerText = res.error.message; document.getElementById('auth-error').style.display = 'block'; }
+            else { location.reload(); }
         }
 
         async function logout() { await _sup.auth.signOut(); location.reload(); }
-
         function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; chatToDelete = null; }
 
-        async function openDeleteMenu(email) {
-            chatToDelete = email;
-            const name = await getProfileName(email);
-            document.getElementById('delete-info').innerText = `Чат с ${name}`;
-            document.getElementById('delete-modal').style.display = 'flex';
-            document.getElementById('del-only-me').onclick = () => confirmDelete('me');
-            document.getElementById('del-both').onclick = () => confirmDelete('both');
-        }
-
-        async function confirmDelete(mode) {
-            if (!chatToDelete) return;
-            if (mode === 'both') {
-                await _sup.from('messages').delete().or(`and(author_email.eq.${myEmail},receiver_email.eq.${chatToDelete}),and(author_email.eq.${chatToDelete},receiver_email.eq.${myEmail})`);
-            } else {
-                let hidden = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
-                if(!hidden.includes(chatToDelete)) hidden.push(chatToDelete);
-                localStorage.setItem('hidden_chats', JSON.stringify(hidden));
-            }
-            if (currentPeer === chatToDelete) goBack();
-            closeDeleteModal();
-            loadHistory();
-        }
-
         async function openChat(email) {
-            if (!email) return;
-            email = email.toLowerCase().trim();
-            currentPeer = email;
-            lastRenderedDate = null;
-            
+            email = email.toLowerCase().trim(); currentPeer = email; lastRenderedDate = null;
             document.body.classList.add('chat-open');
             const name = await getProfileName(email);
             document.getElementById('chat-title').innerText = name;
             document.getElementById('header-av').innerText = name[0];
-            
-            const msgContainer = document.getElementById('messages');
-            msgContainer.innerHTML = "";
-            
-            const { data } = await _sup.from('messages')
-                .select('*')
-                .or(`and(author_email.eq.${myEmail},receiver_email.eq.${currentPeer}),and(author_email.eq.${currentPeer},receiver_email.eq.${myEmail})`)
-                .order('created_at', { ascending: true });
-            
+            document.getElementById('messages').innerHTML = "";
+            const { data } = await _sup.from('messages').select('*').or(`and(author_email.eq.${myEmail},receiver_email.eq.${currentPeer}),and(author_email.eq.${currentPeer},receiver_email.eq.${myEmail})`).order('created_at', { ascending: true });
             if (data) data.forEach(render);
             updateChatListUI();
         }
 
         async function loadHistory() {
-            const { data: msgs } = await _sup.from('messages')
-                .select('author_email, receiver_email, created_at')
-                .or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`)
-                .order('created_at', {ascending: false});
-
-            const list = document.getElementById('chat-list');
+            const { data: msgs } = await _sup.from('messages').select('author_email, receiver_email, created_at').or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`).order('created_at', {ascending: false});
             if (!msgs) return;
-
             const hidden = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
-            const emails = [...new Set(msgs.map(m => m.author_email.toLowerCase() === myEmail ? m.receiver_email.toLowerCase() : m.author_email.toLowerCase()))]
-                            .filter(e => !hidden.includes(e));
-
-            list.innerHTML = "";
+            const emails = [...new Set(msgs.map(m => m.author_email.toLowerCase() === myEmail ? m.receiver_email.toLowerCase() : m.author_email.toLowerCase()))].filter(e => !hidden.includes(e));
+            const list = document.getElementById('chat-list'); list.innerHTML = "";
             for (const email of emails) {
                 const name = await getProfileName(email);
                 const item = document.createElement('div');
@@ -355,97 +224,53 @@
                 item.setAttribute('data-email', email);
                 item.innerHTML = `<div class="avatar">${name[0]}</div><div style="font-weight:600; font-size:14px;">${name}</div>`;
                 item.onclick = () => openChat(email);
-                item.oncontextmenu = (e) => { e.preventDefault(); openDeleteMenu(email); };
-                
-                item.ontouchstart = () => pressTimer = setTimeout(() => openDeleteMenu(email), 600);
-                item.ontouchend = () => clearTimeout(pressTimer);
-
                 list.appendChild(item);
             }
         }
 
-        function updateChatListUI() {
-            document.querySelectorAll('.chat-item').forEach(el => {
-                el.classList.toggle('active', el.getAttribute('data-email') === currentPeer);
-            });
-        }
-
-        function renderDateDivider(dateStr) {
-            const date = new Date(dateStr).toLocaleDateString();
+        function render(m) {
+            const date = new Date(m.created_at).toLocaleDateString();
             if (lastRenderedDate !== date) {
                 lastRenderedDate = date;
-                const div = document.createElement('div');
-                div.className = 'date-divider';
+                const div = document.createElement('div'); div.className = 'date-divider';
                 div.innerText = date === new Date().toLocaleDateString() ? "Сегодня" : date;
                 document.getElementById('messages').appendChild(div);
             }
-        }
 
-        function render(m) {
-            renderDateDivider(m.created_at);
             const isMine = m.author_email.toLowerCase() === myEmail;
             const div = document.createElement('div');
             div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
             
+            // ИСПРАВЛЕННЫЙ БЛОК ОТОБРАЖЕНИЯ КАРТИНКИ
             let fHtml = "";
             if (m.file_url) {
-                // Чистим URL от скобок Postgres и берем первый элемент
-                let rawUrl = Array.isArray(m.file_url) ? m.file_url[0] : m.file_url;
-                if (rawUrl) {
-                    const cleanUrl = String(rawUrl).replace(/[{}"]/g, "").split(',')[0].trim();
-                    if (cleanUrl.startsWith('http')) {
-                        fHtml = `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}', '_blank')" onerror="this.style.display='none'">`;
-                    }
+                const url = Array.isArray(m.file_url) ? m.file_url[0] : m.file_url;
+                if (url && typeof url === 'string') {
+                    const cleanUrl = url.replace(/[{}"]/g, "");
+                    fHtml = `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}', '_blank')" onerror="this.style.display='none'">`;
                 }
             }
 
             const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            const tick = isMine ? (m.is_read ? '✓✓' : '✓') : '';
-            const textContent = m.text ? `<div style="white-space: pre-wrap;">${m.text}</div>` : "";
-            
-            div.innerHTML = `
-                ${fHtml}
-                ${textContent}
-                <div class="msg-info">
-                    <span>${time}</span> 
-                    <span style="font-weight:bold; color:#58BFFF;">${tick}</span>
-                </div>`;
-                
-            const msgBox = document.getElementById('messages');
-            msgBox.appendChild(div);
-            msgBox.scrollTop = msgBox.scrollHeight;
+            div.innerHTML = `${fHtml}${m.text ? `<div style="white-space: pre-wrap;">${m.text}</div>` : ""}<div class="msg-info"><span>${time}</span> ${isMine ? (m.is_read ? '✓✓' : '✓') : ''}</div>`;
+            const msgBox = document.getElementById('messages'); msgBox.appendChild(div); msgBox.scrollTop = msgBox.scrollHeight;
         }
 
         async function getProfileName(email) {
             if (profileCache[email]) return profileCache[email];
             const { data } = await _sup.from('user_profiles').select('display_name').eq('email', email).maybeSingle();
             const name = data?.display_name || email.split('@')[0];
-            profileCache[email] = name;
-            return name;
+            profileCache[email] = name; return name;
         }
 
         document.getElementById('msg-form').onsubmit = async (e) => {
             e.preventDefault();
-            const i = document.getElementById('input');
-            const text = i.value.trim();
-            if (text && currentPeer) {
-                i.value = ""; 
-                await _sup.from('messages').insert([{ 
-                    text: text, 
-                    author_email: myEmail, 
-                    receiver_email: currentPeer,
-                    is_read: false,
-                    created_at: new Date().toISOString()
-                }]);
-            }
+            const i = document.getElementById('input'); const text = i.value.trim();
+            if (text && currentPeer) { i.value = ""; await _sup.from('messages').insert([{ text, author_email: myEmail, receiver_email: currentPeer }]); }
         };
 
-        function goBack() { 
-            document.body.classList.remove('chat-open'); 
-            currentPeer = null; 
-            updateChatListUI();
-        }
-        
+        function goBack() { document.body.classList.remove('chat-open'); currentPeer = null; loadHistory(); }
+        function updateChatListUI() { document.querySelectorAll('.chat-item').forEach(el => el.classList.toggle('active', el.getAttribute('data-email') === currentPeer)); }
         init();
     </script>
 </body>
