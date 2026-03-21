@@ -39,10 +39,26 @@
         .del-btn-red { width: 100%; padding: 12px; background: #ff4d4d; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .del-btn-gray { width: 100%; padding: 12px; background: #3D3F46; color: white; border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px; }
 
+        /* НОВАЯ МОДАЛКА ПРЕДПРОСМОТРА ФОТО */
+        #photo-modal {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 30000;
+            display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-content {
+            background: #2E3037; border-radius: 24px; width: 100%; max-width: 450px;
+            overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .modal-body { padding: 10px; text-align: center; background: #1a1b1e; }
+        .modal-body img { max-width: 100%; max-height: 50vh; border-radius: 12px; object-fit: contain; }
+        .modal-footer { padding: 15px 20px; background: #2E3037; display: flex; gap: 12px; align-items: center; }
+        #modal-caption { background: #23242A; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; padding: 10px 15px; border-radius: 12px; }
+        .modal-send-btn { background: #7058c9; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+
         /* САЙДБАР */
         #sidebar { width: 300px; background: #25272D; border-right: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 10px; background: #252935; display: flex; align-items: center; gap: 10px; border-radius: 10px; margin: 5px; }
-        #search-input { background: #33353B; border: none; border-radius: 40px; color: #fff; outline: none; padding: 8px 5px; flex-grow: 1; font-size: 14px; }
+        #search-input { background: #33353B; border: none; border-radius: 40px; color: #fff; outline: none; padding: 8px 15px; flex-grow: 1; font-size: 14px; }
         #chat-list { overflow-y: auto; flex-grow: 1; padding: 10px; }
 
         .chat-item {
@@ -95,6 +111,22 @@
         </div>
     </div>
 
+    <div id="photo-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span style="font-weight: bold;">Отправить фото</span>
+                <span onclick="cancelFile()" style="cursor: pointer; font-size: 24px;">×</span>
+            </div>
+            <div class="modal-body">
+                <img id="modal-img-preview" src="">
+            </div>
+            <div class="modal-footer">
+                <input id="modal-caption" placeholder="Добавьте подпись..." autocomplete="off">
+                <button class="modal-send-btn" id="modal-send-btn">ОТПРАВИТЬ</button>
+            </div>
+        </div>
+    </div>
+
     <div id="delete-modal" onclick="closeDeleteModal()">
         <div class="delete-card" onclick="event.stopPropagation()">
             <h3 style="margin-top: 0; color: #fff;">Удалить чат?</h3>
@@ -139,13 +171,17 @@
 
         let myEmail = "", currentPeer = null, profileCache = {}, lastRenderedDate = null, chatToDelete = null, pressTimer = null;
 
+        const fileInput = document.getElementById('file-input');
+        const photoModal = document.getElementById('photo-modal');
+        const modalImg = document.getElementById('modal-img-preview');
+        const modalCaption = document.getElementById('modal-caption');
+
         async function init() {
             const { data: { session } } = await _sup.auth.getSession();
             if (session) {
                 myEmail = session.user.email.toLowerCase().trim();
                 document.getElementById('auth-overlay').style.display = 'none';
                 
-                // Realtime подписка
                 _sup.channel('messages-realtime')
                     .on('postgres_changes', { 
                         event: 'INSERT', 
@@ -166,6 +202,60 @@
                 document.getElementById('auth-overlay').style.display = 'flex';
             }
         }
+
+        // ЛОГИКА МОДАЛКИ ФАЙЛА
+        fileInput.onchange = () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            if (file.type.startsWith('image/')) {
+                modalImg.src = URL.createObjectURL(file);
+                photoModal.style.display = 'flex';
+            }
+        };
+
+        function cancelFile() {
+            fileInput.value = "";
+            modalCaption.value = "";
+            photoModal.style.display = 'none';
+        }
+
+        async function sendWithFile() {
+            const file = fileInput.files[0];
+            const text = modalCaption.value.trim();
+            if (!file || !currentPeer) return;
+
+            const btn = document.getElementById('modal-send-btn');
+            btn.innerText = "ЗАГРУЗКА...";
+            btn.disabled = true;
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
+            const filePath = `${myEmail}/${fileName}`;
+
+            const { data: uploadData, error: uploadError } = await _sup.storage.from('uploads').upload(filePath, file);
+
+            if (uploadError) {
+                alert("Ошибка загрузки: " + uploadError.message);
+            } else {
+                const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(filePath);
+                
+                await _sup.from('messages').insert([{ 
+                    text: text, 
+                    author_email: myEmail, 
+                    receiver_email: currentPeer,
+                    is_read: false,
+                    file_url: [publicUrl],
+                    file_type: file.type,
+                    created_at: new Date().toISOString()
+                }]);
+            }
+            
+            btn.innerText = "ОТПРАВИТЬ";
+            btn.disabled = false;
+            cancelFile();
+        }
+
+        document.getElementById('modal-send-btn').onclick = sendWithFile;
 
         async function handleAuth(type) {
             const email = document.getElementById('auth-email').value;
@@ -300,13 +390,12 @@
 
         async function getProfileName(email) {
             if (profileCache[email]) return profileCache[email];
-            const { data } = await _sup.from('useprofiles').select('display_name').eq('email', email).maybeSingle();
+            const { data } = await _sup.from('user_profiles').select('display_name').eq('email', email).maybeSingle();
             const name = data?.display_name || email.split('@')[0];
             profileCache[email] = name;
             return name;
         }
 
-        // Исправленная отправка сообщений
         document.getElementById('msg-form').onsubmit = async (e) => {
             e.preventDefault();
             const i = document.getElementById('input');
