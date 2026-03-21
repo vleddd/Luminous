@@ -238,10 +238,9 @@
                 btn.innerText = "ОТПРАВИТЬ";
                 btn.disabled = false;
             } else {
-                // ПОЛУЧАЕМ ПУБЛИЧНУЮ ССЫЛКУ
                 const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(filePath);
                 
-                // ВАЖНО: записываем в массив, чтобы SQL не ругался
+                // Записываем данные. Если в БД file_url это text[], передаем [publicUrl]. Если text - просто publicUrl.
                 await _sup.from('messages').insert([{ 
                     text: text, 
                     author_email: myEmail, 
@@ -328,7 +327,7 @@
 
         async function loadHistory() {
             const { data: msgs } = await _sup.from('messages')
-                .select('author_email, receiver_email')
+                .select('author_email, receiver_email, created_at')
                 .or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`)
                 .order('created_at', {ascending: false});
 
@@ -381,12 +380,12 @@
             
             let fHtml = "";
             if (m.file_url) {
-                // Умная обработка URL (извлекаем из массива или строки и чистим от фигурных скобок)
+                // Извлекаем URL из массива или строки и чистим от фигурных скобок PostgreSQL
                 let rawUrl = Array.isArray(m.file_url) ? m.file_url[0] : m.file_url;
                 if (rawUrl) {
                     const cleanUrl = String(rawUrl).replace(/{|}/g, "");
-                    if (cleanUrl.startsWith('http')) {
-                        fHtml = `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}')">`;
+                    if (cleanUrl.includes("http")) {
+                        fHtml = `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}')" onerror="this.style.display='none'">`;
                     }
                 }
             }
@@ -394,7 +393,17 @@
             const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
             const tick = isMine ? (m.is_read ? '✓✓' : '✓') : '';
             
-            div.innerHTML = `${fHtml}<div style="white-space: pre-wrap;">${m.text || ""}</div><div class="msg-info"><span>${time}</span> <span style="font-weight:bold; color:#58BFFF;">${tick}</span></div>`;
+            // Если есть текст, оборачиваем его, если нет - оставляем только картинку
+            const textContent = m.text ? `<div style="white-space: pre-wrap;">${m.text}</div>` : "";
+            
+            div.innerHTML = `
+                ${fHtml}
+                ${textContent}
+                <div class="msg-info">
+                    <span>${time}</span> 
+                    <span style="font-weight:bold; color:#58BFFF;">${tick}</span>
+                </div>`;
+                
             document.getElementById('messages').appendChild(div);
             document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
         }
