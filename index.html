@@ -3,76 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v0.8 - Control Update</title>
+    <title>Luminous v0.8 - Control & Media</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #25272D; color: #fff; height: 100dvh; display: flex; overflow: hidden; }
 
-        /* ОКНО РЕГИСТРАЦИИ */
+        /* ЭФФЕКТЫ КОНТЕКСТНОГО МЕНЮ */
+        #menu-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.3); 
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            z-index: 35000; display: none; opacity: 0; transition: opacity 0.2s;
+        }
+        .msg-focus { z-index: 35001 !important; position: relative !important; transform: scale(1.02); transition: 0.2s; }
+        
+        #context-menu {
+            position: fixed; z-index: 35002; display: none; width: 180px;
+            background: rgba(46, 48, 55, 0.9); border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            overflow: hidden; animation: menuShow 0.15s ease-out;
+        }
+        @keyframes menuShow { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .menu-item {
+            padding: 12px 15px; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s;
+        }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:hover { background: rgba(255,255,255,0.1); }
+        .menu-item.red { color: #ff5e5e; }
+
+        /* ОСТАЛЬНЫЕ СТИЛИ ИЗ v0.7 */
         #auth-overlay { position: fixed; inset: 0; background: #1E1F23; z-index: 10000; display: none; align-items: center; justify-content: center; }
         .auth-card { background: #2E3037; padding: 35px; border-radius: 24px; width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
         .auth-input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 12px; border: none; background: #23242A; color: #fff; outline: none; font-size: 16px; }
         .auth-btn { width: 100%; padding: 12px; background: #7058c9; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .auth-secondary { background: transparent; color: #6EBDFD; border: 1px solid #6EBDFD; }
 
-        /* СИСТЕМА КОНТЕКСТНОГО МЕНЮ И РАЗМЫТИЯ */
-        #overlay-blur {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            z-index: 40000; display: none; opacity: 0; transition: opacity 0.2s;
-        }
-        .active-msg-focus { z-index: 40001 !important; position: relative !important; }
-
-        #msg-context-menu {
-            position: fixed; z-index: 40002; display: none; width: 220px;
-            background: rgba(46, 48, 55, 0.95); backdrop-filter: blur(20px);
-            border-radius: 18px; border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;
-        }
-        .context-item {
-            padding: 12px 16px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
-            transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .context-item:last-child { border-bottom: none; }
-        .context-item:active, .context-item:hover { background: rgba(255,255,255,0.1); }
-        .context-item.danger { color: #ff5e5e; }
-
-        /* МОДАЛКА УДАЛЕНИЯ */
-        #delete-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 50000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        #delete-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 40000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .delete-card { background: #2E3037; padding: 25px; border-radius: 24px; width: 100%; max-width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
         .del-btn-red { width: 100%; padding: 12px; background: #ff4d4d; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .del-btn-gray { width: 100%; padding: 12px; background: #3D3F46; color: white; border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px; }
 
-        /* ДИЗАЙН САЙТА (БЕЗ ИЗМЕНЕНИЙ) */
+        #photo-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 30000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: #2E3037; border-radius: 24px; width: 100%; max-width: 450px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1); }
+        .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .modal-body { padding: 15px; background: #1a1b1e; max-height: 60vh; overflow-y: auto; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+        .preview-item { position: relative; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; background: #23242A; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); }
+        .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
+        .file-icon-label { font-size: 11px; text-align: center; word-break: break-all; padding: 5px; color: #BAC1F3; }
+        .modal-footer { padding: 15px 20px; background: #2E3037; display: flex; gap: 12px; align-items: center; }
+        #modal-caption { background: #23242A; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; padding: 10px 15px; border-radius: 12px; }
+        .modal-send-btn { background: #7058c9; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+
+        #full-viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 50000; display: none; align-items: center; justify-content: center; padding: 10px; }
+        #viewer-content { max-width: 100%; max-height: 100%; position: relative; }
+        #viewer-content img, #viewer-content video { max-width: 100%; max-height: 95vh; border-radius: 8px; }
+
         #sidebar { width: 300px; background: #25272D; border-right: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 10px; background: #252935; display: flex; align-items: center; gap: 10px; border-radius: 10px; margin: 5px; }
         #search-input { background: #33353B; border: none; border-radius: 40px; color: #fff; outline: none; padding: 8px 15px; flex-grow: 1; font-size: 14px; }
         #chat-list { overflow-y: auto; flex-grow: 1; padding: 10px; }
-        .chat-item { background: transparent; border-radius: 15px; margin-bottom: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+        .chat-item { background: transparent; border-radius: 15px; margin-bottom: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; user-select: none; }
         .chat-item.active { background: #34373F !important; border: 1px solid #565C69; }
 
         #main-chat { flex-grow: 1; display: flex; flex-direction: column; background: #2E3037; position: relative; }
         #chat-header { padding: 10px 20px; background: #25272D; display: flex; align-items: center; gap: 12px; height: 60px; margin: 5px; border-radius: 10px; }
         #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .date-divider { align-self: center; background: rgba(0,0,0,0.2); color: #BAC1F3; padding: 5px 15px; border-radius: 20px; font-size: 12px; margin: 15px 0; font-weight: 500; opacity: 0.8; }
 
-        .msg { 
-            width: fit-content; min-width: 80px; max-grow: 0; max-width: 85%; padding: 10px 14px; font-size: 15px; 
-            word-wrap: break-word; display: flex; flex-direction: column; position: relative; transition: transform 0.2s;
-            user-select: none; -webkit-user-select: none;
-        }
-        .msg-info { font-size: 10px; opacity: 0.5; margin-top: 4px; align-self: flex-end; display: flex; gap: 4px; align-items: center; }
+        .msg { width: fit-content; min-width: 80px; max-width: 85%; padding: 10px 14px; font-size: 15px; word-wrap: break-word; display: flex; flex-direction: column; position: relative; }
+        .msg-info { font-size: 10px; opacity: 0.5; margin-top: 4px; align-self: flex-end; display: flex; gap: 4px; }
         .msg-theirs { align-self: flex-start; background: #191a1d; border-radius: 18px 18px 18px 4px; }
         .msg-mine { align-self: flex-end; background: #7058c9; border-radius: 18px 18px 4px 18px; }
 
-        /* СЕТКА ФАЙЛОВ */
         .photo-grid { display: grid; gap: 4px; margin-bottom: 6px; border-radius: 12px; overflow: hidden; width: 100%; max-width: 320px; }
-        .photo-grid img, .photo-grid video { width: 100%; height: 160px; object-fit: cover; cursor: pointer; display: block; }
+        .photo-grid img, .photo-grid video { width: 100%; height: 160px; object-fit: cover; cursor: pointer; display: block; background: rgba(0,0,0,0.1); }
+        .grid-1 img, .grid-1 video { height: auto; max-height: 300px; object-fit: contain; }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr; }
+        .grid-3 *:first-child { grid-column: span 2; height: 180px; }
+        .grid-4 { grid-template-columns: 1fr 1fr; }
 
         .input-area { padding: 10px 20px; display: flex; align-items: center; gap: 12px; background: #2E3037; }
         .input-wrapper { background: #23242A; flex-grow: 1; border-radius: 15px; padding: 12px 15px; display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.05); }
         #input { background: none; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; }
-        .send-btn { color: #6EBDFD; font-size: 28px; cursor: pointer; background: none; border: none; transition: 0.2s; }
-        .edit-mode-active .input-wrapper { border: 1px solid #7058c9; }
-
+        .send-btn { color: #6EBDFD; font-size: 28px; cursor: pointer; background: none; border: none; display: flex; align-items: center; transition: 0.2s; }
         .avatar { width: 40px; height: 40px; border-radius: 50%; background: #E0E2E5; color: #444; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; text-transform: uppercase; }
 
         @media (max-width: 768px) {
@@ -85,8 +99,8 @@
 </head>
 <body>
 
-    <div id="overlay-blur" onclick="closeContextMenu()"></div>
-    <div id="msg-context-menu"></div>
+    <div id="menu-backdrop" onclick="closeMenu()"></div>
+    <div id="context-menu"></div>
 
     <div id="auth-overlay">
         <div class="auth-card">
@@ -99,12 +113,30 @@
         </div>
     </div>
 
+    <div id="photo-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span style="font-weight: bold;">Отправить файлы</span>
+                <span onclick="cancelFile()" style="cursor: pointer; font-size: 24px;">×</span>
+            </div>
+            <div class="modal-body" id="modal-preview-container"></div>
+            <div class="modal-footer">
+                <input id="modal-caption" placeholder="Добавьте подпись..." autocomplete="off">
+                <button class="modal-send-btn" id="modal-send-btn">ОТПРАВИТЬ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="full-viewer" onclick="this.style.display='none'">
+        <div id="viewer-content"></div>
+        <span style="position:absolute; top:20px; right:30px; font-size:40px; cursor:pointer;">×</span>
+    </div>
+
     <div id="delete-modal" onclick="closeDeleteModal()">
         <div class="delete-card" onclick="event.stopPropagation()">
-            <h3 id="del-title" style="margin-top: 0; color: #fff;">Удалить?</h3>
-            <p id="del-desc" style="color: #8E94A5; font-size: 14px; margin-bottom: 20px;"></p>
-            <button id="del-btn-me" class="del-btn-gray">Только у меня</button>
-            <button id="del-btn-both" class="del-btn-red">У обоих</button>
+            <h3 style="margin-top: 0; color: #fff;">Удалить сообщение?</h3>
+            <button id="del-only-me" class="del-btn-gray">Удалить только у меня</button>
+            <button id="del-both" class="del-btn-red">Удалить у обоих</button>
             <button onclick="closeDeleteModal()" style="background:none; border:none; color:#8E94A5; cursor:pointer; width:100%; padding:10px;">Отмена</button>
         </div>
     </div>
@@ -128,21 +160,24 @@
         <div id="messages"></div>
         <form class="input-area" id="msg-form">
             <div class="input-wrapper">
-                <div id="cancel-edit" style="display:none; cursor:pointer; color:#ff5e5e; font-weight:bold;">✕</div>
+                <div id="cancel-edit" style="display:none; cursor:pointer; color:#ff5e5e; font-size:20px;">✕</div>
                 <input id="input" placeholder="Message" autocomplete="off">
                 <label for="file-input" style="font-size: 20px; cursor: pointer; transform: rotate(45deg); opacity: 0.7;">📎</label>
                 <input type="file" id="file-input" style="display:none" multiple>
             </div>
-            <button type="submit" class="send-btn" id="send-btn">➤</button>
+            <button type="submit" class="send-btn" id="send-btn-main">➤</button>
         </form>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const _sup = supabase.createClient('https://rlbrnsjluipocxommmvx.supabase.co', 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG');
+        let myEmail = "", currentPeer = null, profileCache = {}, lastRenderedDate = null, editingMsgId = null, selectedMsg = null, pressTimer = null;
 
-        let myEmail = "", currentPeer = null, profileCache = {};
-        let pressTimer = null, editingMsgId = null, selectedMsgData = null;
+        const fileInput = document.getElementById('file-input');
+        const photoModal = document.getElementById('photo-modal');
+        const modalCaption = document.getElementById('modal-caption');
+        const previewContainer = document.getElementById('modal-preview-container');
 
         async function init() {
             const { data: { session } } = await _sup.auth.getSession();
@@ -151,221 +186,238 @@
                 document.getElementById('auth-overlay').style.display = 'none';
                 
                 _sup.channel('messages-realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
-                    if (payload.eventType === 'INSERT') {
-                        if (isCurrentChat(payload.new)) render(payload.new);
-                    } else if (payload.eventType === 'UPDATE') {
-                        const el = document.getElementById(`msg-${payload.new.id}`);
-                        if (el) updateMsgElement(el, payload.new);
-                    } else if (payload.eventType === 'DELETE') {
-                        document.getElementById(`msg-${payload.old.id}`)?.remove();
-                    }
+                    const m = payload.new || payload.old;
+                    if (payload.eventType === 'INSERT' && isRelevant(m)) render(m);
+                    if (payload.eventType === 'UPDATE' && isRelevant(m)) updateMsgUI(m);
+                    if (payload.eventType === 'DELETE') document.getElementById(`msg-${m.id}`)?.remove();
                     loadHistory();
                 }).subscribe();
-
                 loadHistory();
             } else {
                 document.getElementById('auth-overlay').style.display = 'flex';
             }
         }
 
-        const isCurrentChat = (m) => (m.author_email === myEmail && m.receiver_email === currentPeer) || (m.author_email === currentPeer && m.receiver_email === myEmail);
+        const isRelevant = (m) => (m.author_email === myEmail && m.receiver_email === currentPeer) || (m.author_email === currentPeer && m.receiver_email === myEmail);
 
         // КОНТЕКСТНОЕ МЕНЮ
-        function showContextMenu(e, msgData) {
+        function showMenu(e, msg) {
             e.preventDefault();
-            selectedMsgData = msgData;
-            const menu = document.getElementById('msg-context-menu');
-            const overlay = document.getElementById('overlay-blur');
-            const msgEl = document.getElementById(`msg-${msgData.id}`);
+            selectedMsg = msg;
+            const menu = document.getElementById('context-menu');
+            const backdrop = document.getElementById('menu-backdrop');
+            const msgEl = document.getElementById(`msg-${msg.id}`);
 
-            // Подсветка сообщения
-            msgEl.classList.add('active-msg-focus');
-            overlay.style.display = 'block';
-            setTimeout(() => overlay.style.opacity = '1', 10);
+            msgEl.classList.add('msg-focus');
+            backdrop.style.display = 'block';
+            setTimeout(() => backdrop.style.opacity = '1', 10);
 
-            // Позиционирование меню
             let x = e.clientX || (e.touches ? e.touches[0].clientX : 100);
             let y = e.clientY || (e.touches ? e.touches[0].clientY : 100);
 
             menu.innerHTML = `
-                <div class="context-item" onclick="copyMsgText('${msgData.text}')">Копировать <span>📋</span></div>
-                ${msgData.author_email === myEmail ? `<div class="context-item" onclick="startEditMsg()">Изменить <span>✏️</span></div>` : ''}
-                <div class="context-item danger" onclick="prepDeleteMsg()">Удалить <span>🗑️</span></div>
+                <div class="menu-item" onclick="copyText('${msg.text}')">Копировать 📋</div>
+                ${msg.author_email === myEmail ? `<div class="menu-item" onclick="startEdit()">Изменить ✏️</div>` : ''}
+                <div class="menu-item red" onclick="openDelModal()">Удалить 🗑️</div>
             `;
-
-            menu.style.display = 'block';
-            // Ограничение, чтобы не выходило за края
-            if (x + 220 > window.innerWidth) x -= 220;
-            if (y + 150 > window.innerHeight) y -= 150;
             
-            menu.style.left = x + 'px';
-            menu.style.top = y + 'px';
+            menu.style.display = 'block';
+            menu.style.left = Math.min(x, window.innerWidth - 200) + 'px';
+            menu.style.top = Math.min(y, window.innerHeight - 150) + 'px';
         }
 
-        function closeContextMenu() {
-            document.getElementById('msg-context-menu').style.display = 'none';
-            document.getElementById('overlay-blur').style.opacity = '0';
-            setTimeout(() => document.getElementById('overlay-blur').style.display = 'none', 200);
-            document.querySelectorAll('.msg').forEach(m => m.classList.remove('active-msg-focus'));
+        function closeMenu() {
+            document.getElementById('context-menu').style.display = 'none';
+            document.getElementById('menu-backdrop').style.opacity = '0';
+            setTimeout(() => document.getElementById('menu-backdrop').style.display = 'none', 200);
+            document.querySelectorAll('.msg').forEach(m => m.classList.remove('msg-focus'));
         }
 
-        function copyMsgText(text) {
-            navigator.clipboard.writeText(text);
-            closeContextMenu();
-        }
+        function copyText(t) { if(t) navigator.clipboard.writeText(t); closeMenu(); }
 
-        function startEditMsg() {
-            editingMsgId = selectedMsgData.id;
-            const input = document.getElementById('input');
-            input.value = selectedMsgData.text;
-            input.focus();
-            document.body.classList.add('edit-mode-active');
+        // РЕДАКТИРОВАНИЕ
+        function startEdit() {
+            if (!selectedMsg.text) { alert("Нельзя редактировать пустые сообщения (только медиа)"); return closeMenu(); }
+            editingMsgId = selectedMsg.id;
+            const inp = document.getElementById('input');
+            inp.value = selectedMsg.text;
+            inp.focus();
             document.getElementById('cancel-edit').style.display = 'block';
-            document.getElementById('send-btn').innerText = '✓';
-            closeContextMenu();
+            document.getElementById('send-btn-main').innerText = '✓';
+            closeMenu();
         }
 
         document.getElementById('cancel-edit').onclick = () => {
             editingMsgId = null;
-            document.getElementById('input').value = "";
+            document.getElementById('input').value = '';
             document.getElementById('cancel-edit').style.display = 'none';
-            document.getElementById('send-btn').innerText = '➤';
-            document.body.classList.remove('edit-mode-active');
+            document.getElementById('send-btn-main').innerText = '➤';
         };
 
-        function prepDeleteMsg() {
-            closeContextMenu();
-            document.getElementById('del-title').innerText = "Удалить сообщение?";
-            document.getElementById('del-desc').innerText = "Это действие нельзя отменить.";
-            document.getElementById('delete-modal').style.display = 'flex';
-            document.getElementById('del-btn-me').style.display = 'none'; // Для сообщений только "у обоих"
-            document.getElementById('del-btn-both').onclick = async () => {
-                await _sup.from('messages').delete().eq('id', selectedMsgData.id);
-                closeDeleteModal();
-            };
-        }
-
+        // УДАЛЕНИЕ
+        function openDelModal() { closeMenu(); document.getElementById('delete-modal').style.display = 'flex'; }
         function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; }
 
-        // РЕНДЕР СООБЩЕНИЙ
+        document.getElementById('del-only-me').onclick = () => {
+            let hidden = JSON.parse(localStorage.getItem('hidden_msgs') || "[]");
+            hidden.push(selectedMsg.id);
+            localStorage.setItem('hidden_msgs', JSON.stringify(hidden));
+            document.getElementById(`msg-${selectedMsg.id}`)?.remove();
+            closeDeleteModal();
+        };
+
+        document.getElementById('del-both').onclick = async () => {
+            await _sup.from('messages').delete().eq('id', selectedMsg.id);
+            closeDeleteModal();
+        };
+
+        // РЕНДЕР
         function render(m) {
+            const hidden = JSON.parse(localStorage.getItem('hidden_msgs') || "[]");
+            if (hidden.includes(m.id)) return;
+
+            renderDateDivider(m.created_at);
             const isMine = m.author_email.toLowerCase() === myEmail;
             const div = document.createElement('div');
             div.id = `msg-${m.id}`;
             div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
             
-            updateMsgElement(div, m);
-
-            // Обработчики нажатий
-            div.oncontextmenu = (e) => showContextMenu(e, m);
-            div.ontouchstart = (e) => {
-                pressTimer = setTimeout(() => showContextMenu(e, m), 500);
-            };
+            div.oncontextmenu = (e) => showMenu(e, m);
+            div.ontouchstart = (e) => pressTimer = setTimeout(() => showMenu(e, m), 600);
             div.ontouchend = () => clearTimeout(pressTimer);
-            div.ontouchmove = () => clearTimeout(pressTimer);
 
+            updateMsgUI(m, div);
             const msgBox = document.getElementById('messages');
             msgBox.appendChild(div);
             msgBox.scrollTop = msgBox.scrollHeight;
         }
 
-        function updateMsgElement(el, m) {
-            const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            const editedTag = m.is_edited ? `<span style="font-size:9px; margin-right:4px; opacity:0.6;">(изм.)</span>` : "";
-            const tick = m.author_email === myEmail ? (m.is_read ? '✓✓' : '✓') : '';
-            
-            // Если есть файлы (сетка из v0.7)
+        function updateMsgUI(m, el = null) {
+            const target = el || document.getElementById(`msg-${m.id}`);
+            if (!target) return;
+
             let fHtml = "";
             if (m.file_url) {
                 const urls = Array.isArray(m.file_url) ? m.file_url : [m.file_url];
-                fHtml = `<div class="photo-grid grid-${Math.min(urls.length, 4)}">`;
-                urls.forEach(url => {
-                    const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
-                    if (cleanUrl.match(/\.(mp4|webm|mov)/i)) fHtml += `<video src="${cleanUrl}" muted loop></video>`;
-                    else fHtml += `<img src="${cleanUrl}">`;
-                });
-                fHtml += `</div>`;
+                if (urls.length > 0) {
+                    fHtml = `<div class="photo-grid grid-${Math.min(urls.length, 4)}">`;
+                    urls.forEach(url => {
+                        const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
+                        const isVid = cleanUrl.match(/\.(mp4|webm|ogg|mov)/i);
+                        if (isVid) fHtml += `<video src="${cleanUrl}" onclick="event.stopPropagation(); openFullView('${cleanUrl}', true)" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
+                        else fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)" onerror="this.style.display='none'">`;
+                    });
+                    fHtml += `</div>`;
+                }
             }
 
-            el.innerHTML = `
-                ${fHtml}
-                <div style="white-space: pre-wrap;">${m.text || ""}</div>
-                <div class="msg-info">
-                    ${editedTag}
-                    <span>${time}</span> 
-                    <span style="font-weight:bold; color:#58BFFF;">${tick}</span>
-                </div>
-            `;
+            const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            const tick = m.author_email === myEmail ? (m.is_read ? '✓✓' : '✓') : '';
+            const edited = m.is_edited ? `<span style="opacity:0.5; margin-right:4px;">(изм.)</span>` : '';
+            const textContent = m.text ? `<div style="white-space: pre-wrap;">${m.text}</div>` : "";
+
+            target.innerHTML = `${fHtml} ${textContent} <div class="msg-info">${edited}<span>${time}</span><span style="font-weight:bold; color:#58BFFF;">${tick}</span></div>`;
         }
 
-        // ОТПРАВКА И РЕДАКТИРОВАНИЕ
+        // МЕДИА ФУНКЦИИ (БЕЗ ИЗМЕНЕНИЙ)
+        fileInput.onchange = () => {
+            const files = fileInput.files;
+            if (files.length === 0) return;
+            previewContainer.innerHTML = "";
+            Array.from(files).forEach(file => {
+                const url = URL.createObjectURL(file);
+                const item = document.createElement('div');
+                item.className = "preview-item";
+                if (file.type.startsWith('image/')) item.innerHTML = `<img src="${url}">`;
+                else if (file.type.startsWith('video/')) item.innerHTML = `<video src="${url}"></video>`;
+                else item.innerHTML = `<div class="file-icon-label">📄<br>${file.name.substring(0,10)}...</div>`;
+                previewContainer.appendChild(item);
+            });
+            photoModal.style.display = 'flex';
+        };
+
+        document.getElementById('modal-send-btn').onclick = async () => {
+            const files = fileInput.files;
+            const text = modalCaption.value.trim();
+            if (files.length === 0 || !currentPeer) return;
+            const btn = document.getElementById('modal-send-btn');
+            btn.innerText = "ЗАГРУЗКА..."; btn.disabled = true;
+
+            try {
+                let uploadedUrls = [];
+                for (let file of files) {
+                    const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                    const { data } = await _sup.storage.from('uploads').upload(fileName, file);
+                    const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
+                    uploadedUrls.push(publicUrl);
+                }
+                await _sup.from('messages').insert([{ text: text || null, author_email: myEmail, receiver_email: currentPeer, file_url: uploadedUrls }]);
+                cancelFile();
+            } catch (err) { alert(err.message); } finally { btn.innerText = "ОТПРАВИТЬ"; btn.disabled = false; }
+        };
+
+        // ОТПРАВКА И ПРОЧЕЕ
         document.getElementById('msg-form').onsubmit = async (e) => {
             e.preventDefault();
-            const input = document.getElementById('input');
-            const text = input.value.trim();
-            if (!text || !currentPeer) return;
+            const inp = document.getElementById('input');
+            const val = inp.value.trim();
+            if (!val || !currentPeer) return;
 
             if (editingMsgId) {
-                // Режим редактирования
-                await _sup.from('messages').update({ text, is_edited: true }).eq('id', editingMsgId);
+                await _sup.from('messages').update({ text: val, is_edited: true }).eq('id', editingMsgId);
                 document.getElementById('cancel-edit').click();
             } else {
-                // Обычный режим
-                await _sup.from('messages').insert([{ text, author_email: myEmail, receiver_email: currentPeer, is_read: false }]);
-                input.value = "";
+                await _sup.from('messages').insert([{ text: val, author_email: myEmail, receiver_email: currentPeer }]);
+                inp.value = "";
             }
         };
 
-        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (Сайдбар и т.д.)
         async function openChat(email) {
-            email = email.toLowerCase().trim();
-            currentPeer = email;
+            currentPeer = email.toLowerCase().trim();
+            lastRenderedDate = null;
             document.body.classList.add('chat-open');
-            const name = await getProfileName(email);
+            const name = await getProfileName(currentPeer);
             document.getElementById('chat-title').innerText = name;
             document.getElementById('header-av').innerText = name[0];
             document.getElementById('messages').innerHTML = "";
-            const { data } = await _sup.from('messages').select('*')
-                .or(`and(author_email.eq.${myEmail},receiver_email.eq.${currentPeer}),and(author_email.eq.${currentPeer},receiver_email.eq.${myEmail})`)
-                .order('created_at', { ascending: true });
+            const { data } = await _sup.from('messages').select('*').or(`and(author_email.eq.${myEmail},receiver_email.eq.${currentPeer}),and(author_email.eq.${currentPeer},receiver_email.eq.${myEmail})`).order('created_at', { ascending: true });
             if (data) data.forEach(render);
-            loadHistory();
+            updateChatListUI();
         }
 
         async function loadHistory() {
-            const { data } = await _sup.from('messages').select('author_email, receiver_email').or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`).order('created_at', {ascending: false});
+            const { data } = await _sup.from('messages').select('author_email, receiver_email').or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`);
             if (!data) return;
-            const emails = [...new Set(data.map(m => m.author_email === myEmail ? m.receiver_email : m.author_email))];
+            const emails = [...new Set(data.map(m => m.author_email.toLowerCase() === myEmail ? m.receiver_email : m.author_email))];
             const list = document.getElementById('chat-list');
             list.innerHTML = "";
             for (const email of emails) {
                 const name = await getProfileName(email);
                 const item = document.createElement('div');
                 item.className = `chat-item ${currentPeer === email ? 'active' : ''}`;
-                item.innerHTML = `<div class="avatar">${name[0]}</div><div>${name}</div>`;
+                item.innerHTML = `<div class="avatar">${name[0]}</div><div style="font-weight:600; font-size:14px;">${name}</div>`;
                 item.onclick = () => openChat(email);
                 list.appendChild(item);
             }
         }
 
-        async function getProfileName(email) {
-            if (profileCache[email]) return profileCache[email];
-            const { data } = await _sup.from('user_profiles').select('display_name').eq('email', email).maybeSingle();
-            profileCache[email] = data?.display_name || email.split('@')[0];
-            return profileCache[email];
+        function renderDateDivider(d) {
+            const date = new Date(d).toLocaleDateString();
+            if (lastRenderedDate !== date) {
+                lastRenderedDate = date;
+                const div = document.createElement('div');
+                div.className = 'date-divider';
+                div.innerText = date === new Date().toLocaleDateString() ? "Сегодня" : date;
+                document.getElementById('messages').appendChild(div);
+            }
         }
 
-        async function handleAuth(type) {
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-pass').value;
-            const { error } = type === 'register' ? await _sup.auth.signUp({ email, password }) : await _sup.auth.signInWithPassword({ email, password });
-            if (error) {
-                const errEl = document.getElementById('auth-error');
-                errEl.innerText = error.message; errEl.style.display = 'block';
-            } else location.reload();
-        }
-
+        async function getProfileName(e) { if(profileCache[e]) return profileCache[e]; const {data} = await _sup.from('user_profiles').select('display_name').eq('email', e).maybeSingle(); const n = data?.display_name || e.split('@')[0]; profileCache[e] = n; return n; }
+        function cancelFile() { fileInput.value = ""; modalCaption.value = ""; photoModal.style.display = 'none'; }
+        function openFullView(u, v) { const c = document.getElementById('viewer-content'); c.innerHTML = v ? `<video src="${u}" controls autoplay></video>` : `<img src="${u}">`; document.getElementById('full-viewer').style.display='flex'; }
+        async function handleAuth(t) { const email = document.getElementById('auth-email').value, password = document.getElementById('auth-pass').value; let res = t === 'register' ? await _sup.auth.signUp({ email, password }) : await _sup.auth.signInWithPassword({ email, password }); if (res.error) alert(res.error.message); else location.reload(); }
         function goBack() { document.body.classList.remove('chat-open'); currentPeer = null; }
+        function updateChatListUI() { document.querySelectorAll('.chat-item').forEach(el => el.classList.toggle('active', el.getAttribute('data-email') === currentPeer)); }
         async function logout() { await _sup.auth.signOut(); location.reload(); }
 
         init();
