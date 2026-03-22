@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v0.7.1 - Reactive Update</title>
+    <title>Luminous v0.7.2</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #25272D; color: #fff; height: 100dvh; display: flex; overflow: hidden; }
@@ -27,7 +27,7 @@
         }
         .auth-secondary { background: transparent; color: #6EBDFD; border: 1px solid #6EBDFD; }
 
-        /* МОДАЛКА УДАЛЕНИЯ (Обновлено для сообщений и чатов) */
+        /* МОДАЛКА УДАЛЕНИЯ */
         #delete-modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 20000;
             display: none; align-items: center; justify-content: center; padding: 20px;
@@ -64,6 +64,7 @@
         }
         .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
         .file-icon-label { font-size: 11px; text-align: center; word-break: break-all; padding: 5px; color: #BAC1F3; }
+
         .modal-footer { padding: 15px 20px; background: #2E3037; display: flex; gap: 12px; align-items: center; }
         #modal-caption { background: #23242A; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; padding: 10px 15px; border-radius: 12px; }
         .modal-send-btn { background: #7058c9; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
@@ -99,7 +100,7 @@
         .msg { 
             width: fit-content; min-width: 80px; max-width: 85%; padding: 10px 14px; font-size: 15px; 
             word-wrap: break-word; display: flex; flex-direction: column; 
-            user-select: none; -webkit-user-select: none; transition: opacity 0.3s, transform 0.3s;
+            user-select: none; -webkit-user-select: none;
         }
         .msg-info { font-size: 10px; opacity: 0.5; margin-top: 4px; align-self: flex-end; display: flex; gap: 4px; }
         .msg-theirs { align-self: flex-start; background: #191a1d; border-radius: 18px 18px 18px 4px; }
@@ -164,7 +165,7 @@
 
     <div id="delete-modal" onclick="closeDeleteModal()">
         <div class="delete-card" onclick="event.stopPropagation()">
-            <h3 id="delete-title" style="margin-top: 0; color: #fff;">Удалить?</h3>
+            <h3 id="delete-title" style="margin-top: 0; color: #fff;">Удалить чат?</h3>
             <p id="delete-info" style="color: #8E94A5; font-size: 14px; margin-bottom: 20px;"></p>
             <button id="del-only-me" class="del-btn-gray">Удалить только у меня</button>
             <button id="del-both" class="del-btn-red">Удалить у обоих</button>
@@ -205,7 +206,7 @@
         const _sup = supabase.createClient('https://rlbrnsjluipocxommmvx.supabase.co', 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG');
 
         let myEmail = "", currentPeer = null, profileCache = {}, lastRenderedDate = null;
-        let chatToDelete = null, msgToDeleteId = null, msgToDeleteEl = null;
+        let chatToDelete = null, msgToDeleteId = null;
         let pressTimer = null;
 
         const fileInput = document.getElementById('file-input');
@@ -219,7 +220,6 @@
                 myEmail = session.user.email.toLowerCase().trim();
                 document.getElementById('auth-overlay').style.display = 'none';
                 
-                // Realtime для новых сообщений И удалений
                 _sup.channel('messages-realtime')
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
                         if (payload.eventType === 'INSERT') {
@@ -230,11 +230,7 @@
                             }
                         } else if (payload.eventType === 'DELETE') {
                             const el = document.getElementById(`msg-${payload.old.id}`);
-                            if (el) {
-                                el.style.opacity = "0";
-                                el.style.transform = "scale(0.8)";
-                                setTimeout(() => el.remove(), 300);
-                            }
+                            if (el) el.remove();
                         }
                         loadHistory(); 
                     })
@@ -246,75 +242,6 @@
             }
         }
 
-        // --- МОБИЛЬНЫЕ СОБЫТИЯ ---
-        function attachLongPress(el, callback) {
-            el.addEventListener('touchstart', (e) => {
-                pressTimer = setTimeout(() => {
-                    if (window.navigator.vibrate) window.navigator.vibrate(50);
-                    callback(e);
-                }, 600);
-            }, { passive: true });
-            el.addEventListener('touchend', () => clearTimeout(pressTimer));
-            el.addEventListener('touchmove', () => clearTimeout(pressTimer));
-            el.oncontextmenu = (e) => { e.preventDefault(); callback(e); };
-        }
-
-        // --- УДАЛЕНИЕ ---
-        function closeDeleteModal() { 
-            document.getElementById('delete-modal').style.display = 'none'; 
-            chatToDelete = null; msgToDeleteId = null; msgToDeleteEl = null;
-        }
-
-        function openDeleteMenu(email) {
-            chatToDelete = email;
-            document.getElementById('delete-title').innerText = "Удалить чат?";
-            getProfileName(email).then(name => {
-                document.getElementById('delete-info').innerText = `Чат с ${name}`;
-            });
-            document.getElementById('delete-modal').style.display = 'flex';
-            document.getElementById('del-only-me').style.display = 'block';
-            document.getElementById('del-only-me').onclick = () => confirmDeleteChat('me');
-            document.getElementById('del-both').onclick = () => confirmDeleteChat('both');
-        }
-
-        function openMsgDeleteMenu(id, element) {
-            msgToDeleteId = id;
-            msgToDeleteEl = element;
-            document.getElementById('delete-title').innerText = "Удалить сообщение?";
-            document.getElementById('delete-info').innerText = "Это действие нельзя отменить.";
-            document.getElementById('delete-modal').style.display = 'flex';
-            document.getElementById('del-only-me').style.display = 'none'; // Для сообщений только "у обоих" (в БД)
-            document.getElementById('del-both').onclick = () => confirmDeleteMsg();
-        }
-
-        async function confirmDeleteChat(mode) {
-            if (!chatToDelete) return;
-            if (mode === 'both') {
-                await _sup.from('messages').delete().or(`and(author_email.eq.${myEmail},receiver_email.eq.${chatToDelete}),and(author_email.eq.${chatToDelete},receiver_email.eq.${myEmail})`);
-            } else {
-                let hidden = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
-                if(!hidden.includes(chatToDelete)) hidden.push(chatToDelete);
-                localStorage.setItem('hidden_chats', JSON.stringify(hidden));
-            }
-            if (currentPeer === chatToDelete) goBack();
-            closeDeleteModal();
-            loadHistory();
-        }
-
-        async function confirmDeleteMsg() {
-            if (!msgToDeleteId) return;
-            // Реактивное скрытие сразу для инициатора
-            if (msgToDeleteEl) {
-                msgToDeleteEl.style.opacity = "0";
-                msgToDeleteEl.style.transform = "scale(0.8)";
-                setTimeout(() => msgToDeleteEl.remove(), 300);
-            }
-            // Удаление из базы (сработает для обоих через Realtime)
-            await _sup.from('messages').delete().eq('id', msgToDeleteId);
-            closeDeleteModal();
-        }
-
-        // --- РАБОТА С ФАЙЛАМИ ---
         fileInput.onchange = () => {
             const files = fileInput.files;
             if (files.length === 0) return;
@@ -362,7 +289,51 @@
 
         document.getElementById('modal-send-btn').onclick = sendWithFile;
 
-        // --- ЧАТ И СООБЩЕНИЯ ---
+        function closeDeleteModal() { 
+            document.getElementById('delete-modal').style.display = 'none'; 
+            chatToDelete = null; msgToDeleteId = null;
+        }
+
+        async function openDeleteMenu(email) {
+            chatToDelete = email;
+            const name = await getProfileName(email);
+            document.getElementById('delete-title').innerText = "Удалить чат?";
+            document.getElementById('delete-info').innerText = `Чат с ${name}`;
+            document.getElementById('delete-modal').style.display = 'flex';
+            document.getElementById('del-only-me').style.display = 'block';
+            document.getElementById('del-only-me').onclick = () => confirmDeleteChat('me');
+            document.getElementById('del-both').onclick = () => confirmDeleteChat('both');
+        }
+
+        function openMsgDeleteMenu(id) {
+            msgToDeleteId = id;
+            document.getElementById('delete-title').innerText = "Удалить сообщение?";
+            document.getElementById('delete-info').innerText = "Удалить сообщение у обоих?";
+            document.getElementById('delete-modal').style.display = 'flex';
+            document.getElementById('del-only-me').style.display = 'none';
+            document.getElementById('del-both').onclick = () => confirmDeleteMsg();
+        }
+
+        async function confirmDeleteChat(mode) {
+            if (!chatToDelete) return;
+            if (mode === 'both') {
+                await _sup.from('messages').delete().or(`and(author_email.eq.${myEmail},receiver_email.eq.${chatToDelete}),and(author_email.eq.${chatToDelete},receiver_email.eq.${myEmail})`);
+            } else {
+                let hidden = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
+                if(!hidden.includes(chatToDelete)) hidden.push(chatToDelete);
+                localStorage.setItem('hidden_chats', JSON.stringify(hidden));
+            }
+            if (currentPeer === chatToDelete) goBack();
+            closeDeleteModal();
+            loadHistory();
+        }
+
+        async function confirmDeleteMsg() {
+            if (!msgToDeleteId) return;
+            await _sup.from('messages').delete().eq('id', msgToDeleteId);
+            closeDeleteModal();
+        }
+
         async function openChat(email) {
             if (!email) return;
             email = email.toLowerCase().trim();
@@ -397,7 +368,9 @@
                 item.setAttribute('data-email', email);
                 item.innerHTML = `<div class="avatar">${name[0]}</div><div style="font-weight:600; font-size:14px;">${name}</div>`;
                 item.onclick = () => openChat(email);
-                attachLongPress(item, () => openDeleteMenu(email));
+                item.oncontextmenu = (e) => { e.preventDefault(); openDeleteMenu(email); };
+                item.ontouchstart = () => pressTimer = setTimeout(() => openDeleteMenu(email), 600);
+                item.ontouchend = () => clearTimeout(pressTimer);
                 list.appendChild(item);
             }
         }
@@ -406,11 +379,10 @@
             const date = new Date(m.created_at).toLocaleDateString();
             if (lastRenderedDate !== date) {
                 lastRenderedDate = date;
-                const d = document.createElement('div'); d.className = 'date-divider';
-                d.innerText = date === new Date().toLocaleDateString() ? "Сегодня" : date;
-                document.getElementById('messages').appendChild(d);
+                const div = document.createElement('div'); div.className = 'date-divider';
+                div.innerText = date === new Date().toLocaleDateString() ? "Сегодня" : date;
+                document.getElementById('messages').appendChild(div);
             }
-
             const isMine = m.author_email.toLowerCase() === myEmail;
             const div = document.createElement('div');
             div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
@@ -419,28 +391,33 @@
             let fHtml = "";
             if (m.file_url) {
                 const urls = Array.isArray(m.file_url) ? m.file_url : [m.file_url];
-                fHtml = `<div class="photo-grid grid-${Math.min(urls.length, 4)}">`;
-                urls.forEach(url => {
-                    const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
-                    if (cleanUrl.match(/\.(mp4|webm|mov)/i)) fHtml += `<video src="${cleanUrl}" onclick="event.stopPropagation(); openFullView('${cleanUrl}', true)" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
-                    else if (cleanUrl.match(/\.(jpg|jpeg|png|gif|webp)/i)) fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)">`;
-                    else fHtml += `<div onclick="window.open('${cleanUrl}', '_blank')" style="background:#23242A; padding:15px; border-radius:10px; cursor:pointer; text-align:center; font-size:11px; border:1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center;"><span style="font-size:20px;">📁</span><span style="opacity:0.6; margin-top:5px;">File</span></div>`;
-                });
-                fHtml += `</div>`;
+                if (urls.length > 0) {
+                    fHtml = `<div class="photo-grid grid-${Math.min(urls.length, 4)}">`;
+                    urls.forEach(url => {
+                        const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
+                        const isVid = cleanUrl.match(/\.(mp4|webm|ogg|mov)/i);
+                        const isImg = cleanUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)/i);
+                        if (isVid) fHtml += `<video src="${cleanUrl}" onclick="event.stopPropagation(); openFullView('${cleanUrl}', true)" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
+                        else if (isImg) fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)" onerror="this.style.display='none'">`;
+                        else fHtml += `<div onclick="window.open('${cleanUrl}', '_blank')" style="background:#23242A; padding:15px; border-radius:10px; cursor:pointer; text-align:center; font-size:11px; border:1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center;"><span style="font-size:20px;">📁</span><span style="opacity:0.6; margin-top:5px;">File</span></div>`;
+                    });
+                    fHtml += `</div>`;
+                }
             }
-
             const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
             div.innerHTML = `${fHtml}${m.text ? `<div style="white-space: pre-wrap;">${m.text}</div>` : ""}<div class="msg-info"><span>${time}</span><span style="font-weight:bold; color:#58BFFF;">${isMine ? (m.is_read ? '✓✓' : '✓') : ''}</span></div>`;
             
-            // Удаление сообщения по долгому нажатию
-            attachLongPress(div, () => openMsgDeleteMenu(m.id, div));
+            // СТАРЫЕ МЕХАНИКИ УДЕРЖАНИЯ (Long Press) для сообщений
+            div.oncontextmenu = (e) => { e.preventDefault(); openMsgDeleteMenu(m.id); };
+            div.ontouchstart = (e) => pressTimer = setTimeout(() => openMsgDeleteMenu(m.id), 600);
+            div.ontouchend = () => clearTimeout(pressTimer);
+            div.ontouchmove = () => clearTimeout(pressTimer);
 
             const msgBox = document.getElementById('messages');
             msgBox.appendChild(div);
             msgBox.scrollTop = msgBox.scrollHeight;
         }
 
-        // --- ВСПОМОГАТЕЛЬНЫЕ ---
         async function getProfileName(email) {
             if (profileCache[email]) return profileCache[email];
             const { data } = await _sup.from('user_profiles').select('display_name').eq('email', email).maybeSingle();
