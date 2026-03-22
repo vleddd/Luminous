@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v0.7 - Multi-Photo</title>
+    <title>Luminous v0.7 - Media Update</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #25272D; color: #fff; height: 100dvh; display: flex; overflow: hidden; }
@@ -39,7 +39,7 @@
         .del-btn-red { width: 100%; padding: 12px; background: #ff4d4d; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .del-btn-gray { width: 100%; padding: 12px; background: #3D3F46; color: white; border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px; }
 
-        /* МОДАЛКА ПРЕДПРОСМОТРА ФОТО */
+        /* МОДАЛКА ПРЕДПРОСМОТРА */
         #photo-modal {
             position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 30000;
             display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
@@ -50,10 +50,18 @@
         }
         .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .modal-body { padding: 10px; text-align: center; background: #1a1b1e; max-height: 60vh; overflow-y: auto; }
-        .modal-body img { max-width: 100%; border-radius: 12px; object-fit: contain; margin-bottom: 10px; }
+        .modal-body img, .modal-body video { max-width: 100%; border-radius: 12px; margin-bottom: 10px; }
         .modal-footer { padding: 15px 20px; background: #2E3037; display: flex; gap: 12px; align-items: center; }
         #modal-caption { background: #23242A; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; padding: 10px 15px; border-radius: 12px; }
         .modal-send-btn { background: #7058c9; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+
+        /* FULL VIEW OVERLAY */
+        #full-viewer {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 50000;
+            display: none; align-items: center; justify-content: center; padding: 10px;
+        }
+        #viewer-content { max-width: 100%; max-height: 100%; position: relative; }
+        #viewer-content img, #viewer-content video { max-width: 100%; max-height: 95vh; border-radius: 8px; }
 
         /* САЙДБАР */
         #sidebar { width: 300px; background: #25272D; border-right: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; flex-shrink: 0; }
@@ -80,13 +88,13 @@
         .msg-theirs { align-self: flex-start; background: #191a1d; border-radius: 18px 18px 18px 4px; }
         .msg-mine { align-self: flex-end; background: #7058c9; border-radius: 18px 18px 4px 18px; }
 
-        /* СЕТКА ФОТО */
+        /* СЕТКА ФОТО/ВИДЕО */
         .photo-grid { display: grid; gap: 4px; margin-bottom: 6px; border-radius: 12px; overflow: hidden; width: 100%; max-width: 320px; }
-        .photo-grid img { width: 100%; height: 160px; object-fit: cover; cursor: pointer; display: block; background: rgba(0,0,0,0.1); }
-        .grid-1 img { height: auto; max-height: 300px; object-fit: contain; }
+        .photo-grid img, .photo-grid video { width: 100%; height: 160px; object-fit: cover; cursor: pointer; display: block; background: rgba(0,0,0,0.1); }
+        .grid-1 img, .grid-1 video { height: auto; max-height: 300px; object-fit: contain; }
         .grid-2 { grid-template-columns: 1fr 1fr; }
         .grid-3 { grid-template-columns: 1fr 1fr; }
-        .grid-3 img:first-child { grid-column: span 2; height: 180px; }
+        .grid-3 *:first-child { grid-column: span 2; height: 180px; }
         .grid-4 { grid-template-columns: 1fr 1fr; }
 
         .input-area { padding: 10px 20px; display: flex; align-items: center; gap: 12px; background: #2E3037; }
@@ -121,16 +129,20 @@
     <div id="photo-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <span style="font-weight: bold;">Отправить фото</span>
+                <span style="font-weight: bold;">Отправить медиа</span>
                 <span onclick="cancelFile()" style="cursor: pointer; font-size: 24px;">×</span>
             </div>
-            <div class="modal-body" id="modal-preview-container">
-                </div>
+            <div class="modal-body" id="modal-preview-container"></div>
             <div class="modal-footer">
                 <input id="modal-caption" placeholder="Добавьте подпись..." autocomplete="off">
                 <button class="modal-send-btn" id="modal-send-btn">ОТПРАВИТЬ</button>
             </div>
         </div>
+    </div>
+
+    <div id="full-viewer" onclick="this.style.display='none'">
+        <div id="viewer-content"></div>
+        <span style="position:absolute; top:20px; right:30px; font-size:40px; cursor:pointer;">×</span>
     </div>
 
     <div id="delete-modal" onclick="closeDeleteModal()">
@@ -165,7 +177,7 @@
                 <div style="font-size: 20px; cursor: pointer; opacity: 0.7;">😊</div>
                 <input id="input" placeholder="Message" autocomplete="off">
                 <label for="file-input" style="font-size: 20px; cursor: pointer; transform: rotate(45deg); opacity: 0.7;">📎</label>
-                <input type="file" id="file-input" style="display:none" accept="image/*" multiple>
+                <input type="file" id="file-input" style="display:none" accept="image/*,video/*" multiple>
             </div>
             <button type="submit" class="send-btn">➤</button>
         </form>
@@ -209,16 +221,23 @@
             }
         }
 
+        // Предпросмотр файлов
         fileInput.onchange = () => {
             const files = fileInput.files;
             if (files.length === 0) return;
             
             previewContainer.innerHTML = "";
             Array.from(files).forEach(file => {
+                const url = URL.createObjectURL(file);
                 if (file.type.startsWith('image/')) {
                     const img = document.createElement('img');
-                    img.src = URL.createObjectURL(file);
+                    img.src = url;
                     previewContainer.appendChild(img);
+                } else if (file.type.startsWith('video/')) {
+                    const vid = document.createElement('video');
+                    vid.src = url;
+                    vid.controls = true;
+                    previewContainer.appendChild(vid);
                 }
             });
             photoModal.style.display = 'flex';
@@ -230,23 +249,35 @@
             photoModal.style.display = 'none';
         }
 
+        // Полноэкранный просмотр
+        function openFullView(url, isVideo) {
+            const viewer = document.getElementById('full-viewer');
+            const content = document.getElementById('viewer-content');
+            content.innerHTML = "";
+            
+            if (isVideo) {
+                content.innerHTML = `<video src="${url}" controls autoplay style="max-width:100%; max-height:95vh;"></video>`;
+            } else {
+                content.innerHTML = `<img src="${url}">`;
+            }
+            viewer.style.display = 'flex';
+            content.onclick = (e) => e.stopPropagation();
+        }
+
         async function sendWithFile() {
             const files = fileInput.files;
             const text = modalCaption.value.trim();
             if (files.length === 0 || !currentPeer) return;
 
             const btn = document.getElementById('modal-send-btn');
-            const originalBtnText = btn.innerText;
             btn.innerText = "ЗАГРУЗКА...";
             btn.disabled = true;
 
             try {
                 let uploadedUrls = [];
-
-                // Загружаем все файлы
                 for (let file of files) {
                     const fileExt = file.name.split('.').pop();
-                    const fileName = `img_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+                    const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
                     
                     const { data: uploadData, error: uploadError } = await _sup.storage
                         .from('uploads')
@@ -258,24 +289,20 @@
                     uploadedUrls.push(publicUrl);
                 }
                 
-                const { error: insertError } = await _sup.from('messages').insert([{ 
+                await _sup.from('messages').insert([{ 
                     text: text || null, 
                     author_email: myEmail, 
                     receiver_email: currentPeer,
                     is_read: false,
-                    file_url: uploadedUrls, // Теперь отправляем массив
-                    file_type: files[0].type,
+                    file_url: uploadedUrls,
                     created_at: new Date().toISOString()
                 }]);
-
-                if (insertError) throw insertError;
                 
                 cancelFile();
             } catch (err) {
-                console.error("Ошибка загрузки:", err);
-                alert("Ошибка: " + (err.message || "Не удалось загрузить файлы"));
+                alert("Ошибка загрузки: " + err.message);
             } finally {
-                btn.innerText = originalBtnText;
+                btn.innerText = "ОТПРАВИТЬ";
                 btn.disabled = false;
             }
         }
@@ -370,10 +397,8 @@
                 item.innerHTML = `<div class="avatar">${name[0]}</div><div style="font-weight:600; font-size:14px;">${name}</div>`;
                 item.onclick = () => openChat(email);
                 item.oncontextmenu = (e) => { e.preventDefault(); openDeleteMenu(email); };
-                
                 item.ontouchstart = () => pressTimer = setTimeout(() => openDeleteMenu(email), 600);
                 item.ontouchend = () => clearTimeout(pressTimer);
-
                 list.appendChild(item);
             }
         }
@@ -403,15 +428,17 @@
             
             let fHtml = "";
             if (m.file_url) {
-                // Преобразуем в массив, если пришла строка (для совместимости)
                 const urls = Array.isArray(m.file_url) ? m.file_url : [m.file_url];
-                const count = urls.length;
-                
-                if (count > 0) {
-                    fHtml = `<div class="photo-grid grid-${Math.min(count, 4)}">`;
+                if (urls.length > 0) {
+                    fHtml = `<div class="photo-grid grid-${Math.min(urls.length, 4)}">`;
                     urls.forEach(url => {
                         const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
-                        fHtml += `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}', '_blank')" onerror="this.style.display='none'">`;
+                        const isVid = cleanUrl.match(/\.(mp4|webm|ogg|mov)/i);
+                        if (isVid) {
+                            fHtml += `<video src="${cleanUrl}" onclick="event.stopPropagation(); openFullView('${cleanUrl}', true)" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
+                        } else {
+                            fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)" onerror="this.style.display='none'">`;
+                        }
                     });
                     fHtml += `</div>`;
                 }
