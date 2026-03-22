@@ -49,8 +49,31 @@
             overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1);
         }
         .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .modal-body { padding: 10px; text-align: center; background: #1a1b1e; max-height: 60vh; overflow-y: auto; }
-        .modal-body img, .modal-body video { max-width: 100%; border-radius: 12px; margin-bottom: 10px; }
+        
+        /* Исправленная сетка в модалке */
+        .modal-body { 
+            padding: 15px; 
+            background: #1a1b1e; 
+            max-height: 60vh; 
+            overflow-y: auto; 
+            display: grid; 
+            gap: 10px; 
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); 
+        }
+        .preview-item {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #23242A;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
+        .file-icon-label { font-size: 11px; text-align: center; word-break: break-all; padding: 5px; color: #BAC1F3; }
+
         .modal-footer { padding: 15px 20px; background: #2E3037; display: flex; gap: 12px; align-items: center; }
         #modal-caption { background: #23242A; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; padding: 10px 15px; border-radius: 12px; }
         .modal-send-btn { background: #7058c9; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
@@ -129,7 +152,7 @@
     <div id="photo-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <span style="font-weight: bold;">Отправить медиа</span>
+                <span style="font-weight: bold;">Отправить файлы</span>
                 <span onclick="cancelFile()" style="cursor: pointer; font-size: 24px;">×</span>
             </div>
             <div class="modal-body" id="modal-preview-container"></div>
@@ -177,7 +200,7 @@
                 <div style="font-size: 20px; cursor: pointer; opacity: 0.7;">😊</div>
                 <input id="input" placeholder="Message" autocomplete="off">
                 <label for="file-input" style="font-size: 20px; cursor: pointer; transform: rotate(45deg); opacity: 0.7;">📎</label>
-                <input type="file" id="file-input" style="display:none" accept="image/*,video/*" multiple>
+                <input type="file" id="file-input" style="display:none" multiple>
             </div>
             <button type="submit" class="send-btn">➤</button>
         </form>
@@ -221,7 +244,7 @@
             }
         }
 
-        // Предпросмотр файлов
+        // ПРЕДПРОСМОТР ФАЙЛОВ СЕТКОЙ
         fileInput.onchange = () => {
             const files = fileInput.files;
             if (files.length === 0) return;
@@ -229,16 +252,18 @@
             previewContainer.innerHTML = "";
             Array.from(files).forEach(file => {
                 const url = URL.createObjectURL(file);
+                const item = document.createElement('div');
+                item.className = "preview-item";
+
                 if (file.type.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.src = url;
-                    previewContainer.appendChild(img);
+                    item.innerHTML = `<img src="${url}">`;
                 } else if (file.type.startsWith('video/')) {
-                    const vid = document.createElement('video');
-                    vid.src = url;
-                    vid.controls = true;
-                    previewContainer.appendChild(vid);
+                    item.innerHTML = `<video src="${url}"></video>`;
+                } else {
+                    const ext = file.name.split('.').pop().toUpperCase();
+                    item.innerHTML = `<div class="file-icon-label">📄<br>${ext}<br>${file.name.substring(0,10)}...</div>`;
                 }
+                previewContainer.appendChild(item);
             });
             photoModal.style.display = 'flex';
         };
@@ -249,7 +274,6 @@
             photoModal.style.display = 'none';
         }
 
-        // Полноэкранный просмотр
         function openFullView(url, isVideo) {
             const viewer = document.getElementById('full-viewer');
             const content = document.getElementById('viewer-content');
@@ -434,10 +458,19 @@
                     urls.forEach(url => {
                         const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
                         const isVid = cleanUrl.match(/\.(mp4|webm|ogg|mov)/i);
+                        const isImg = cleanUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)/i);
+
                         if (isVid) {
                             fHtml += `<video src="${cleanUrl}" onclick="event.stopPropagation(); openFullView('${cleanUrl}', true)" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
-                        } else {
+                        } else if (isImg) {
                             fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)" onerror="this.style.display='none'">`;
+                        } else {
+                            // Кнопка для скачивания прочих файлов
+                            const fileName = cleanUrl.split('/').pop();
+                            fHtml += `<div onclick="window.open('${cleanUrl}', '_blank')" style="background:#23242A; padding:15px; border-radius:10px; cursor:pointer; text-align:center; font-size:11px; border:1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                                <span style="font-size:20px;">📁</span>
+                                <span style="opacity:0.6; margin-top:5px;">${fileName.substring(0,10)}...</span>
+                            </div>`;
                         }
                     });
                     fHtml += `</div>`;
