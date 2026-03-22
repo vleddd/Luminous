@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v1.1</title>
+    <title>Luminous v1.3</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -11,74 +11,89 @@
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: var(--bg); color: #fff; height: 100dvh; display: flex; overflow: hidden; }
         
-        #sidebar { width: 300px; background: var(--bg); border-right: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+        #sidebar { width: 300px; background: var(--bg); border-right: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 10; }
         #cl { flex-grow: 1; overflow-y: auto; }
-        .chat-item { padding: 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .chat-item:active { background: rgba(255,255,255,0.1); }
+        .chat-item { padding: 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; }
+        .chat-item:hover { background: rgba(255,255,255,0.05); }
 
         #main-chat { flex-grow: 1; display: flex; flex-direction: column; background: var(--chat-bg); position: relative; }
         #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px 15px; border-radius: 15px; max-width: 80%; line-height: 1.4; word-wrap: break-word; }
-        .msg.mine { align-self: flex-end; background: var(--accent); }
+        .msg { padding: 10px 15px; border-radius: 15px; max-width: 80%; line-height: 1.4; font-size: 15px; }
+        .msg.mine { align-self: flex-end; background: var(--accent); color: white; }
         .msg.theirs { align-self: flex-start; background: var(--panel); }
 
+        /* Окно звонка */
         #call-overlay {
-            position: fixed; inset: 0; background: #141517; z-index: 50000;
-            display: none; flex-direction: column; align-items: center; justify-content: space-around; padding: 40px;
+            position: fixed; inset: 0; background: radial-gradient(circle at center, #2e3037 0%, #141517 100%); 
+            z-index: 50000; display: none; flex-direction: column; align-items: center; justify-content: space-around; padding: 40px;
         }
-        .call-btn { width: 70px; height: 70px; border-radius: 50%; border: none; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn-accept { background: #2ecc71; }
-        .btn-decline { background: #e74c3c; }
-        .btn-mute { background: #565C69; width: 55px; height: 55px; margin-top: 20px; }
-        .muted { background: #ff9f43 !important; }
+        .avatar-wrap { position: relative; width: 140px; height: 140px; }
+        .avatar-main { 
+            width: 100%; height: 100%; border-radius: 50%; background: var(--accent); 
+            display: flex; align-items: center; justify-content: center; font-size: 50px;
+            box-shadow: 0 0 30px rgba(112, 88, 201, 0.3); z-index: 2; position: relative;
+        }
+        /* Пульсация от голоса */
+        #pulse {
+            position: absolute; inset: 0; border-radius: 50%; background: var(--accent);
+            opacity: 0; transform: scale(1); transition: transform 0.1s, opacity 0.1s; z-index: 1;
+        }
 
-        #chat-header { padding: 15px 20px; background: var(--bg); display: flex; align-items: center; min-height: 65px; }
-        #call-icon { font-size: 24px; cursor: pointer; margin-left: auto; display: none; color: #2ecc71; }
-        input { background: var(--panel); border: none; color: #fff; padding: 12px; border-radius: 10px; outline: none; }
-        #auth-overlay { position: fixed; inset: 0; background: #1E1F23; z-index: 10000; display: none; align-items: center; justify-content: center; }
+        .call-btn { width: 75px; height: 75px; border-radius: 50%; border: none; color: white; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .btn-accept { background: #2ecc71; box-shadow: 0 0 20px rgba(46, 204, 113, 0.4); }
+        .btn-decline { background: #e74c3c; box-shadow: 0 0 20px rgba(231, 76, 60, 0.4); }
+        
+        #auth-overlay { position: fixed; inset: 0; background: #1E1F23; z-index: 60000; display: none; align-items: center; justify-content: center; }
+        input { background: var(--panel); border: none; color: #fff; padding: 14px; border-radius: 12px; outline: none; width: 100%; }
+        #call-icon { font-size: 24px; cursor: pointer; margin-left: auto; display: none; color: #2ecc71; padding: 10px; }
     </style>
 </head>
-<body onclick="unlockAudio()">
+<body onclick="forceUnlock()">
 
     <div id="auth-overlay">
-        <div style="background: var(--chat-bg); padding: 35px; border-radius: 24px; text-align: center; width: 320px;">
-            <h2 style="color: var(--accent);">Luminous</h2>
-            <input type="email" id="ae" placeholder="Email" style="width:100%; margin-bottom:12px;">
-            <input type="password" id="ap" placeholder="Пароль" style="width:100%; margin-bottom:20px;">
-            <button onclick="auth()" style="width:100%; padding:12px; background:var(--accent); border:none; color:#fff; border-radius:10px; cursor:pointer;">Войти</button>
+        <div style="background: var(--chat-bg); padding: 40px; border-radius: 28px; text-align: center; width: 340px; border: 1px solid rgba(255,255,255,0.05);">
+            <h2 style="color: var(--accent); margin-bottom: 25px;">Luminous</h2>
+            <input type="email" id="ae" placeholder="Email" style="margin-bottom:12px;">
+            <input type="password" id="ap" placeholder="Пароль" style="margin-bottom:25px;">
+            <button onclick="auth()" style="width:100%; padding:14px; background:var(--accent); border:none; color:#fff; border-radius:12px; font-weight:bold; cursor:pointer;">Войти</button>
         </div>
     </div>
 
     <div id="call-overlay">
         <div style="text-align: center;">
-            <div id="ca" style="width:120px; height:120px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:45px; margin:0 auto;">👤</div>
-            <h2 id="cn">User</h2>
-            <p id="cs">Звонок...</p>
-            <button id="mb" class="call-btn btn-mute" onclick="toggleMic()" style="display:none; margin: 20px auto;">🎤</button>
+            <div class="avatar-wrap">
+                <div id="pulse"></div>
+                <div class="avatar-main" id="ca">👤</div>
+            </div>
+            <h2 id="cn" style="margin-top:40px; font-size: 28px;">User</h2>
+            <p id="cs" style="opacity: 0.6; letter-spacing: 1px;">СОЕДИНЕНИЕ...</p>
+            <button id="mb" onclick="toggleMic()" style="background:rgba(255,255,255,0.05); border:none; padding:15px; border-radius:15px; color:#fff; margin-top:20px; cursor:pointer;">🎤 Микрофон: ВКЛ</button>
         </div>
-        <div style="display: flex; gap: 40px;">
+        <div style="display: flex; gap: 50px;">
             <button class="call-btn btn-decline" onclick="endCall()">✖</button>
             <button class="call-btn btn-accept" id="ab" onclick="handleAccept()">📞</button>
         </div>
         <audio id="rt" loop src="https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3"></audio>
-        <audio id="remote-audio" autoplay></audio>
+        <audio id="remote-audio" autoplay playsinline></audio>
     </div>
 
     <div id="sidebar">
-        <div style="padding: 20px; font-weight: bold; color: var(--accent); font-size: 20px;">Luminous</div>
-        <input id="si" placeholder="Поиск (Email)..." onkeyup="if(event.key==='Enter') openChat(this.value)" style="margin:0 15px 15px;">
+        <div style="padding: 25px; font-weight: bold; color: var(--accent); font-size: 22px;">Luminous</div>
+        <div style="padding: 0 15px 15px;">
+            <input id="si" placeholder="Найти по Email..." onkeyup="if(event.key==='Enter') openChat(this.value)">
+        </div>
         <div id="cl"></div>
     </div>
 
     <div id="main-chat">
-        <div id="chat-header">
-            <div id="ct" style="font-weight:bold;">Выберите чат</div>
+        <div id="chat-header" style="padding:15px 25px; background:var(--bg); display:flex; align-items:center; border-bottom: 1px solid rgba(0,0,0,0.1);">
+            <div id="ct" style="font-weight:600; font-size: 17px;">Выберите чат</div>
             <div id="call-icon" onclick="startCall()">📞</div>
         </div>
         <div id="messages"></div>
-        <form id="mf" style="padding:15px; display:flex; gap:10px;" onsubmit="sendMsg(event)">
-            <input id="mi" placeholder="Сообщение..." style="flex-grow:1;" autocomplete="off">
-            <button style="background:none; border:none; color:var(--accent); font-size:28px; cursor:pointer;">➤</button>
+        <form id="mf" style="padding:20px; display:flex; gap:12px; background: var(--bg);" onsubmit="sendMsg(event)">
+            <input id="mi" placeholder="Ваше сообщение..." autocomplete="off">
+            <button style="background:none; border:none; color:var(--accent); font-size:30px; cursor:pointer; padding:0 5px;">➤</button>
         </form>
     </div>
 
@@ -86,7 +101,8 @@
         const _sup = supabase.createClient('https://rlbrnsjluipocxommmvx.supabase.co', 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG');
         
         let myEmail = "", peerEmail = null, callId = null;
-        let localStream = null, peerInstance = null, currentCall = null, isMuted = false;
+        let localStream = null, peerInstance = null, currentCall = null;
+        let aCtx, analyser, dataArr;
 
         async function init() {
             const { data: { session } } = await _sup.auth.getSession();
@@ -94,52 +110,44 @@
             
             myEmail = session.user.email.toLowerCase().trim();
             document.getElementById('auth-overlay').style.display = 'none';
-
-            // Авто-создание профиля, чтобы не было ошибок со связями
-            await _sup.from('user_profiles').upsert([{ email: myEmail, display_name: myEmail.split('@')[0] }], { onConflict: 'email' });
+            await _sup.from('user_profiles').upsert([{ email: myEmail, display_name: myEmail.split('@')[0] }]);
 
             const safeId = myEmail.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-            peerInstance = new Peer(safeId);
+            peerInstance = new Peer(safeId, { debug: 1 });
             
             peerInstance.on('call', async (incoming) => {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: { 
+                    echoCancellation: true, noiseSuppression: true, autoGainControl: true 
+                } });
                 incoming.answer(localStream);
                 setupVoice(incoming);
             });
 
             _sup.channel('m').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, p => {
-                const m = p.new;
-                if (m.receiver_email === myEmail || m.author_email === myEmail) {
-                    if (peerEmail === m.author_email || peerEmail === m.receiver_email) render(m);
+                if (p.new.receiver_email === myEmail || p.new.author_email === myEmail) {
+                    if (peerEmail === p.new.author_email || peerEmail === p.new.receiver_email) render(p.new);
                     loadList();
                 }
             }).subscribe();
 
             _sup.channel('c').on('postgres_changes', { event: '*', schema: 'public', table: 'calls' }, p => {
                 const c = p.new;
-                if (p.eventType === 'INSERT' && c.receiver_email === myEmail) {
-                    callId = c.id;
-                    showCallUI(c.caller_email, 'in');
-                }
+                if (p.eventType === 'INSERT' && c.receiver_email === myEmail) { callId = c.id; showCallUI(c.caller_email, 'in'); }
                 if (p.eventType === 'UPDATE' && c.id === callId) {
                     if (c.status === 'active') connectVoice();
                     if (c.status === 'ended' || c.status === 'rejected') hideCallUI();
                 }
             }).subscribe();
-
             loadList();
         }
 
         async function connectVoice() {
-            document.getElementById('cs').innerText = "В эфире";
+            document.getElementById('cs').innerText = "В ЭФИРЕ";
             document.getElementById('rt').pause();
-            document.getElementById('mb').style.display = 'block';
-            
             if (document.getElementById('ab').style.display === 'none' && !currentCall) {
                 const targetId = peerEmail.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const call = peerInstance.call(targetId, localStream);
-                setupVoice(call);
+                setupVoice(peerInstance.call(targetId, localStream));
             }
         }
 
@@ -148,72 +156,88 @@
             call.on('stream', (stream) => {
                 const audio = document.getElementById('remote-audio');
                 audio.srcObject = stream;
-                audio.play().catch(e => console.log("Нажми на экран для звука"));
+                // Форсируем воспроизведение
+                audio.play().then(() => {
+                    console.log("Аудио запущено");
+                }).catch(e => {
+                    document.getElementById('cs').innerText = "НАЖМИТЕ НА ЭКРАН (ЗВУК ЗАБЛОКИРОВАН)";
+                });
+                visualize(stream);
             });
         }
 
+        function visualize(stream) {
+            if (!aCtx) aCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const source = aCtx.createMediaStreamSource(stream);
+            analyser = aCtx.createAnalyser();
+            source.connect(analyser);
+            analyser.fftSize = 64;
+            dataArr = new Uint8Array(analyser.frequencyBinCount);
+
+            function draw() {
+                if (!currentCall) { document.getElementById('pulse').style.opacity = 0; return; }
+                analyser.getByteFrequencyData(dataArr);
+                let sum = dataArr.reduce((a, b) => a + b, 0);
+                let vol = sum / dataArr.length;
+                let s = 1 + (vol / 50);
+                let p = document.getElementById('pulse');
+                p.style.transform = `scale(${s})`;
+                p.style.opacity = vol > 10 ? 0.4 : 0;
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
         async function startCall() {
-            if (!peerEmail) return;
-            // Проверка на случай ошибки 400 со скрина
-            const { data, error } = await _sup.from('calls').insert([{
-                caller_email: myEmail, 
-                receiver_email: peerEmail, 
-                status: 'ringing'
-            }]).select().single();
-
-            if (error) {
-                console.error("Ошибка звонка:", error);
-                return alert("Не удалось создать звонок. Сначала напишите сообщение этому пользователю.");
-            }
-
-            if (data) {
-                callId = data.id;
-                showCallUI(peerEmail, 'out');
-            }
+            const { data, error } = await _sup.from('calls').insert([{ caller_email: myEmail, receiver_email: peerEmail, status: 'ringing' }]).select().single();
+            if (error) return alert("Ошибка! Пользователь должен быть зарегистрирован.");
+            callId = data.id; showCallUI(peerEmail, 'out');
         }
 
         async function handleAccept() {
-            if (!callId) return;
             await _sup.from('calls').update({ status: 'active' }).eq('id', callId);
             document.getElementById('ab').style.display = 'none';
         }
 
         async function endCall() {
-            if (callId) await _sup.from('calls').update({ status: 'ended', ended_at: new Date() }).eq('id', callId);
+            if (callId) await _sup.from('calls').update({ status: 'ended' }).eq('id', callId);
             hideCallUI();
         }
 
         function toggleMic() {
             if (!localStream) return;
-            isMuted = !isMuted;
-            localStream.getAudioTracks()[0].enabled = !isMuted;
-            const btn = document.getElementById('mb');
-            btn.innerText = isMuted ? "🔇" : "🎤";
-            btn.classList.toggle('muted', isMuted);
+            const enabled = localStream.getAudioTracks()[0].enabled = !localStream.getAudioTracks()[0].enabled;
+            document.getElementById('mb').innerText = enabled ? "🎤 Микрофон: ВКЛ" : "🔇 Микрофон: ВЫКЛ";
+            document.getElementById('mb').style.color = enabled ? "#fff" : "#e74c3c";
         }
 
         function showCallUI(e, type) {
             document.getElementById('cn').innerText = e.split('@')[0];
+            document.getElementById('ca').innerText = e[0].toUpperCase();
             document.getElementById('call-overlay').style.display = 'flex';
-            if (type === 'in') {
-                document.getElementById('ab').style.display = 'flex';
-                document.getElementById('rt').play().catch(()=>{});
-            } else {
-                document.getElementById('ab').style.display = 'none';
+            if (type === 'in') { 
+                document.getElementById('ab').style.display = 'flex'; 
+                document.getElementById('rt').play().catch(()=>{}); 
+            } else { 
+                document.getElementById('ab').style.display = 'none'; 
+                document.getElementById('cs').innerText = "ВЫЗОВ..."; 
             }
         }
 
         function hideCallUI() {
             if (localStream) localStream.getTracks().forEach(t => t.stop());
-            if (currentCall) currentCall.close();
             document.getElementById('call-overlay').style.display = 'none';
             document.getElementById('rt').pause();
-            callId = null; isMuted = false; localStream = null; currentCall = null;
+            currentCall = null; localStream = null;
+            document.getElementById('cs').innerText = "СОЕДИНЕНИЕ...";
         }
 
-        function unlockAudio() {
+        function forceUnlock() {
+            if (aCtx && aCtx.state === 'suspended') aCtx.resume();
             const r = document.getElementById('rt');
-            r.play().then(() => { r.pause(); r.currentTime = 0; }).catch(()=>{});
+            r.play().then(() => { r.pause(); }).catch(()=>{});
+            const ra = document.getElementById('remote-audio');
+            if (ra.srcObject) ra.play().catch(()=>{});
         }
 
         async function openChat(e) {
@@ -232,18 +256,18 @@
             const list = document.getElementById('cl'); list.innerHTML = "";
             peers.forEach(p => {
                 const d = document.createElement('div'); d.className = "chat-item";
-                d.innerHTML = `<strong>${p.split('@')[0]}</strong><br><small style="opacity:0.5">${p}</small>`;
+                d.innerHTML = `<strong>${p.split('@')[0]}</strong><br><small style="opacity:0.4">${p}</small>`;
                 d.onclick = () => openChat(p);
                 list.appendChild(d);
             });
         }
 
         function render(m) {
-            const d = document.createElement('div');
+            const d = document.createElement('div'); 
             d.className = `msg ${m.author_email === myEmail ? 'mine' : 'theirs'}`;
-            d.innerText = m.text;
+            d.innerText = m.text; 
             document.getElementById('messages').appendChild(d);
-            const b = document.getElementById('messages'); b.scrollTop = b.scrollHeight;
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
         }
 
         async function sendMsg(e) {
@@ -253,8 +277,7 @@
         }
 
         async function auth() {
-            const e = document.getElementById('ae').value; const p = document.getElementById('ap').value;
-            const { error } = await _sup.auth.signInWithPassword({email:e, password:p});
+            const { error } = await _sup.auth.signInWithPassword({email: document.getElementById('ae').value, password: document.getElementById('ap').value});
             if (error) alert(error.message); else location.reload();
         }
 
