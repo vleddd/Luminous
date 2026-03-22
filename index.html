@@ -50,7 +50,6 @@
         }
         .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
         
-        /* Исправленная сетка в модалке */
         .modal-body { 
             padding: 15px; 
             background: #1a1b1e; 
@@ -244,7 +243,6 @@
             }
         }
 
-        // ПРЕДПРОСМОТР ФАЙЛОВ СЕТКОЙ
         fileInput.onchange = () => {
             const files = fileInput.files;
             if (files.length === 0) return;
@@ -318,7 +316,7 @@
                     author_email: myEmail, 
                     receiver_email: currentPeer,
                     is_read: false,
-                    file_url: uploadedUrls,
+                    file_url: uploadedUrls, // Массив ссылок
                     created_at: new Date().toISOString()
                 }]);
                 
@@ -452,11 +450,12 @@
             
             let fHtml = "";
             if (m.file_url) {
-                const urls = Array.isArray(m.file_url) ? m.file_url : [m.file_url];
+                const urls = Array.isArray(m.file_url) ? m.file_url : (m.file_url ? [m.file_url] : []);
                 if (urls.length > 0) {
                     fHtml = `<div class="photo-grid grid-${Math.min(urls.length, 4)}">`;
                     urls.forEach(url => {
                         const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
+                        if (!cleanUrl) return;
                         const isVid = cleanUrl.match(/\.(mp4|webm|ogg|mov)/i);
                         const isImg = cleanUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)/i);
 
@@ -465,7 +464,6 @@
                         } else if (isImg) {
                             fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)" onerror="this.style.display='none'">`;
                         } else {
-                            // Кнопка для скачивания прочих файлов
                             const fileName = cleanUrl.split('/').pop();
                             fHtml += `<div onclick="window.open('${cleanUrl}', '_blank')" style="background:#23242A; padding:15px; border-radius:10px; cursor:pointer; text-align:center; font-size:11px; border:1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center;">
                                 <span style="font-size:20px;">📁</span>
@@ -502,19 +500,28 @@
             return name;
         }
 
+        // ИСПРАВЛЕННЫЙ ОБРАБОТЧИК ОТПРАВКИ ТЕКСТА
         document.getElementById('msg-form').onsubmit = async (e) => {
             e.preventDefault();
             const i = document.getElementById('input');
             const text = i.value.trim();
             if (text && currentPeer) {
+                const messageText = text;
                 i.value = ""; 
-                await _sup.from('messages').insert([{ 
-                    text: text, 
+                const { error } = await _sup.from('messages').insert([{ 
+                    text: messageText, 
                     author_email: myEmail, 
                     receiver_email: currentPeer,
                     is_read: false,
+                    file_url: [], // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: передаем пустой массив
                     created_at: new Date().toISOString()
                 }]);
+
+                if (error) {
+                    console.error("Error:", error);
+                    alert("Ошибка отправки: " + error.message);
+                    i.value = messageText;
+                }
             }
         };
 
