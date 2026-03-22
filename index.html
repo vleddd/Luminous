@@ -3,421 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v0.7.5 - Calls Update</title>
+    <title>Luminous v0.8.1</title>
     <style>
-        /* СОХРАНЕННЫЙ ДИЗАЙН */
-        * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; background: #25272D; color: #fff; height: 100dvh; display: flex; overflow: hidden; }
+        :root { --bg: #25272D; --card: #2E3037; --accent: #7058c9; --text: #fff; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { margin: 0; background: var(--bg); color: var(--text); height: 100dvh; display: flex; overflow: hidden; }
 
+        /* Авторизация */
         #auth-overlay { position: fixed; inset: 0; background: #1E1F23; z-index: 10000; display: none; align-items: center; justify-content: center; }
-        .auth-card { background: #2E3037; padding: 35px; border-radius: 24px; width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
-        .auth-input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 12px; border: none; background: #23242A; color: #fff; outline: none; font-size: 16px; }
-        .auth-btn { width: 100%; padding: 12px; background: #7058c9; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
-        .auth-secondary { background: transparent; color: #6EBDFD; border: 1px solid #6EBDFD; }
+        .auth-card { background: var(--card); padding: 30px; border-radius: 20px; width: 320px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .auth-input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: none; background: #1a1b1e; color: #fff; }
+        .auth-btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
 
-        #delete-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .delete-card { background: #2E3037; padding: 25px; border-radius: 24px; width: 100%; max-width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
-        .del-btn-red { width: 100%; padding: 12px; background: #ff4d4d; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
-        .del-btn-gray { width: 100%; padding: 12px; background: #3D3F46; color: white; border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px; }
-
-        #photo-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 30000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: #2E3037; border-radius: 24px; width: 100%; max-width: 450px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1); }
-        .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .modal-body { padding: 15px; background: #1a1b1e; max-height: 60vh; overflow-y: auto; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
-        .preview-item { position: relative; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; background: #23242A; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); }
-        .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
-        .file-icon-label { font-size: 11px; text-align: center; word-break: break-all; padding: 5px; color: #BAC1F3; }
-        .modal-footer { padding: 15px 20px; background: #2E3037; display: flex; gap: 12px; align-items: center; }
-        #modal-caption { background: #23242A; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; padding: 10px 15px; border-radius: 12px; }
-        .modal-send-btn { background: #7058c9; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
-
-        #full-viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 50000; display: none; align-items: center; justify-content: center; padding: 10px; }
-        #viewer-content { max-width: 100%; max-height: 100%; position: relative; }
-        #viewer-content img, #viewer-content video { max-width: 100%; max-height: 95vh; border-radius: 8px; }
-
-        #sidebar { width: 300px; background: #25272D; border-right: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; flex-shrink: 0; }
-        .sidebar-header { padding: 10px; background: #252935; display: flex; align-items: center; gap: 10px; border-radius: 10px; margin: 5px; }
-        #search-input { background: #33353B; border: none; border-radius: 40px; color: #fff; outline: none; padding: 8px 15px; flex-grow: 1; font-size: 14px; }
-        #chat-list { overflow-y: auto; flex-grow: 1; padding: 10px; }
-        .chat-item { background: transparent; border-radius: 15px; margin-bottom: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; user-select: none; }
-        .chat-item.active { background: #34373F !important; border: 1px solid #565C69; }
-
-        #main-chat { flex-grow: 1; display: flex; flex-direction: column; background: #2E3037; position: relative; }
-        #chat-header { padding: 10px 20px; background: #25272D; display: flex; align-items: center; gap: 12px; height: 60px; margin: 5px; border-radius: 10px; }
-        #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .date-divider { align-self: center; background: rgba(0,0,0,0.2); color: #BAC1F3; padding: 5px 15px; border-radius: 20px; font-size: 12px; margin: 15px 0; font-weight: 500; opacity: 0.8; }
-        .msg { width: fit-content; min-width: 80px; max-width: 85%; padding: 10px 14px; font-size: 15px; word-wrap: break-word; display: flex; flex-direction: column; }
-        .msg-info { font-size: 10px; opacity: 0.5; margin-top: 4px; align-self: flex-end; display: flex; gap: 4px; }
-        .msg-theirs { align-self: flex-start; background: #191a1d; border-radius: 18px 18px 18px 4px; }
-        .msg-mine { align-self: flex-end; background: #7058c9; border-radius: 18px 18px 4px 18px; }
-
-        .photo-grid { display: grid; gap: 4px; margin-bottom: 6px; border-radius: 12px; overflow: hidden; width: 100%; max-width: 320px; }
-        .photo-grid img, .photo-grid video { width: 100%; height: 160px; object-fit: cover; cursor: pointer; display: block; background: rgba(0,0,0,0.1); }
-        .grid-1 img, .grid-1 video { height: auto; max-height: 300px; object-fit: contain; }
-        .grid-2 { grid-template-columns: 1fr 1fr; }
-        .grid-3 { grid-template-columns: 1fr 1fr; }
-        .grid-3 *:first-child { grid-column: span 2; height: 180px; }
-        .grid-4 { grid-template-columns: 1fr 1fr; }
-
-        .input-area { padding: 10px 20px; display: flex; align-items: center; gap: 12px; background: #2E3037; }
-        .input-wrapper { background: #23242A; flex-grow: 1; border-radius: 15px; padding: 12px 15px; display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.05); }
-        #input { background: none; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; }
-        .send-btn { color: #6EBDFD; font-size: 28px; cursor: pointer; background: none; border: none; display: flex; align-items: center; transition: 0.2s; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #E0E2E5; color: #444; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; text-transform: uppercase; }
-
-        /* НОВЫЙ ИНТЕРФЕЙС ЗВОНКОВ (НЕВИДИМЫЙ ДО ВЫЗОВА) */
+        /* Звонок */
         #call-overlay {
-            position: fixed; inset: 0; background: #1a1b1e; z-index: 60000;
-            display: none; flex-direction: column; align-items: center; justify-content: space-around; padding: 40px 20px;
+            position: fixed; inset: 0; background: #141517; z-index: 50000;
+            display: none; flex-direction: column; align-items: center; justify-content: space-around; padding: 50px 20px;
         }
-        .call-avatar { width: 120px; height: 120px; border-radius: 50%; background: #7058c9; font-size: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(112,88,201,0.4); }
-        .call-actions { display: flex; gap: 40px; }
-        .call-btn { width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 24px; border: none; color: white; transition: 0.3s; }
-        .btn-accept { background: #4cd964; box-shadow: 0 0 20px rgba(76,217,100,0.3); }
-        .btn-decline { background: #ff3b30; box-shadow: 0 0 20px rgba(255,59,48,0.3); }
+        .call-av { width: 120px; height: 120px; border-radius: 50%; background: var(--accent); font-size: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(112,88,201,0.4); }
+        .call-btn { width: 70px; height: 70px; border-radius: 50%; border: none; color: white; font-size: 24px; cursor: pointer; transition: 0.2s; }
+        .btn-accept { background: #2ecc71; }
+        .btn-decline { background: #e74c3c; }
         .call-btn:active { transform: scale(0.9); }
-        #call-btn-header { cursor: pointer; font-size: 20px; opacity: 0.7; padding: 10px; transition: 0.2s; display: none; }
-        #call-btn-header:hover { opacity: 1; color: #4cd964; }
 
-        @media (max-width: 768px) {
-            #sidebar { width: 100%; position: absolute; height: 100%; z-index: 10; }
-            #main-chat { width: 100%; position: absolute; height: 100%; z-index: 20; transform: translateX(100%); transition: 0.25s ease; }
+        /* Чат */
+        #sidebar { width: 300px; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; }
+        #main-chat { flex-grow: 1; display: flex; flex-direction: column; background: var(--card); }
+        #chat-header { height: 65px; padding: 0 20px; display: flex; align-items: center; gap: 15px; background: var(--bg); }
+        #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .msg { padding: 10px 16px; border-radius: 18px; max-width: 75%; font-size: 15px; line-height: 1.4; }
+        .msg.mine { align-self: flex-end; background: var(--accent); color: white; }
+        .msg.theirs { align-self: flex-start; background: #1a1b1e; color: white; }
+
+        #call-trigger { font-size: 24px; cursor: pointer; display: none; margin-left: auto; color: #2ecc71; }
+
+        @media (max-width: 600px) {
+            #sidebar { width: 100%; }
+            #main-chat { position: fixed; inset: 0; z-index: 100; transform: translateX(100%); transition: 0.3s; }
             body.chat-open #main-chat { transform: translateX(0); }
-            .input-area { padding: 10px; }
-            #back-mobile { display: block !important; }
         }
     </style>
 </head>
-<body>
-
-    <div id="auth-overlay">
+<body onclick="enableAudio()"> <div id="auth-overlay">
         <div class="auth-card">
-            <h2 style="color: #BAC1F3; margin-bottom: 20px;">Luminous</h2>
+            <h2 style="color: var(--accent);">Luminous</h2>
             <input type="email" id="auth-email" class="auth-input" placeholder="Email">
             <input type="password" id="auth-pass" class="auth-input" placeholder="Пароль">
-            <button onclick="handleAuth('login')" class="auth-btn">Войти</button>
-            <button onclick="handleAuth('register')" class="auth-btn auth-secondary">Регистрация</button>
-            <p id="auth-error" style="color: #ff5e5e; font-size: 12px; margin-top: 10px; display: none;"></p>
+            <button onclick="auth('login')" class="auth-btn">Войти</button>
+            <p onclick="auth('reg')" style="font-size: 12px; cursor: pointer; margin-top: 15px; opacity: 0.6;">Нет аккаунта? Регистрация</p>
         </div>
     </div>
 
     <div id="call-overlay">
         <div style="text-align: center;">
-            <div class="call-avatar" id="call-av">?</div>
-            <h2 id="call-name" style="margin-top: 20px; font-weight: 400;">Звонок...</h2>
-            <p id="call-status" style="opacity: 0.6;">Входящий вызов</p>
+            <div class="call-av" id="ca">?</div>
+            <h2 id="cn" style="margin: 20px 0 10px;">User</h2>
+            <p id="cs" style="opacity: 0.6;">Звонок...</p>
         </div>
-        <div class="call-actions">
+        <div style="display: flex; gap: 40px;">
             <button class="call-btn btn-decline" onclick="endCall()">✖</button>
-            <button class="call-btn btn-accept" id="accept-btn" onclick="acceptCall()">📞</button>
+            <button class="call-btn btn-accept" id="ab" onclick="acceptCall()">📞</button>
         </div>
-        <audio id="ringtone" loop src="https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3"></audio>
-    </div>
-
-    <div id="photo-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span style="font-weight: bold;">Отправить файлы</span>
-                <span onclick="cancelFile()" style="cursor: pointer; font-size: 24px;">×</span>
-            </div>
-            <div class="modal-body" id="modal-preview-container"></div>
-            <div class="modal-footer">
-                <input id="modal-caption" placeholder="Добавьте подпись..." autocomplete="off">
-                <button class="modal-send-btn" id="modal-send-btn">ОТПРАВИТЬ</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="full-viewer" onclick="this.style.display='none'">
-        <div id="viewer-content"></div>
-        <span style="position:absolute; top:20px; right:30px; font-size:40px; cursor:pointer;">×</span>
-    </div>
-
-    <div id="delete-modal" onclick="closeDeleteModal()">
-        <div class="delete-card" onclick="event.stopPropagation()">
-            <h3 style="margin-top: 0; color: #fff;">Удалить чат?</h3>
-            <p id="delete-info" style="color: #8E94A5; font-size: 14px; margin-bottom: 20px;"></p>
-            <button id="del-only-me" class="del-btn-gray">Удалить только у меня</button>
-            <button id="del-both" class="del-btn-red">Удалить у обоих</button>
-            <button onclick="closeDeleteModal()" style="background:none; border:none; color:#8E94A5; cursor:pointer; width:100%; padding:10px;">Отмена</button>
-        </div>
+        <audio id="rt" loop src="https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3"></audio>
     </div>
 
     <div id="sidebar">
-        <div class="sidebar-header">
-            <div class="menu-btn" style="cursor:pointer; opacity:0.6;">☰</div>
-            <input id="search-input" placeholder="Search" onkeyup="if(event.key==='Enter') openChat(this.value)">
-            <div style="color: #BAC1F3; font-weight: bold; font-size: 14px; margin-left: auto;">Luminous</div>
-        </div>
-        <div id="chat-list"></div>
+        <div style="padding: 20px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.05);">Чаты</div>
+        <input type="text" id="si" placeholder="Поиск по email..." style="margin: 10px; padding: 10px; border-radius: 8px; border:none; background:#1a1b1e; color:#fff;" onkeyup="if(event.key==='Enter') openChat(this.value)">
+        <div id="cl" style="overflow-y:auto; flex-grow:1;"></div>
     </div>
 
     <div id="main-chat">
         <div id="chat-header">
-            <div onclick="goBack()" style="cursor:pointer; font-size:24px; display:none; padding-right:10px;" id="back-mobile">‹</div>
-            <div class="avatar" id="header-av">?</div>
-            <div id="chat-title" style="font-weight:600;">Выберите собеседника</div>
-            <div id="call-btn-header" onclick="startCall()">📞</div>
-            <div onclick="logout()" style="margin-left: auto; cursor: pointer; opacity: 0.5; font-size: 12px;">Выйти</div>
+            <div onclick="document.body.classList.remove('chat-open')" style="cursor:pointer; font-size:24px; padding-right:10px;">‹</div>
+            <div id="ct" style="font-weight: bold;">Выберите чат</div>
+            <div id="call-trigger" onclick="startCall()">📞</div>
         </div>
         <div id="messages"></div>
-        <form class="input-area" id="msg-form">
-            <div class="input-wrapper">
-                <div style="font-size: 20px; cursor: pointer; opacity: 0.7;">😊</div>
-                <input id="input" placeholder="Message" autocomplete="off">
-                <label for="file-input" style="font-size: 20px; cursor: pointer; transform: rotate(45deg); opacity: 0.7;">📎</label>
-                <input type="file" id="file-input" style="display:none" multiple>
-            </div>
-            <button type="submit" class="send-btn">➤</button>
+        <form style="padding: 15px; display: flex; gap: 10px;" onsubmit="send(event)">
+            <input id="mi" placeholder="Сообщение..." style="flex-grow:1; background:#1a1b1e; border:none; color:#fff; padding:12px; border-radius:10px;" autocomplete="off">
+            <button style="background:none; border:none; color:var(--accent); font-size:24px; cursor:pointer;">➤</button>
         </form>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const _sup = supabase.createClient('https://rlbrnsjluipocxommmvx.supabase.co', 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG');
+        const SB_URL = 'https://rlbrnsjluipocxommmvx.supabase.co';
+        const SB_KEY = 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG';
+        const _sup = supabase.createClient(SB_URL, SB_KEY);
 
-        let myEmail = "", currentPeer = null, profileCache = {}, lastRenderedDate = null, chatToDelete = null, currentCallId = null;
+        let myEmail = "", peer = null, callId = null;
+        let audioEnabled = false;
+
+        // 1. Разблокировка аудио для телефонов
+        function enableAudio() {
+            if (!audioEnabled) {
+                const ring = document.getElementById('rt');
+                ring.play().then(() => { ring.pause(); ring.currentTime = 0; });
+                audioEnabled = true;
+                console.log("Аудио разблокировано");
+            }
+        }
 
         async function init() {
             const { data: { session } } = await _sup.auth.getSession();
-            if (session) {
-                myEmail = session.user.email.toLowerCase().trim();
-                document.getElementById('auth-overlay').style.display = 'none';
-                
-                // Realtime для сообщений
-                _sup.channel('messages-realtime')
-                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                        const m = payload.new;
-                        if ((m.author_email === myEmail && m.receiver_email === currentPeer) || 
-                            (m.author_email === currentPeer && m.receiver_email === myEmail)) {
-                            render(m);
+            if (!session) { document.getElementById('auth-overlay').style.display = 'flex'; return; }
+            
+            myEmail = session.user.email.toLowerCase().trim();
+            document.getElementById('auth-overlay').style.display = 'none';
+
+            // ПОДПИСКА REALTIME (ЗВОНКИ)
+            _sup.channel('calls-signals')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'calls' }, payload => {
+                    const c = payload.new;
+                    console.log("Сигнал в БД:", payload.eventType, c);
+
+                    // Если пришел новый звонок МНЕ
+                    if (payload.eventType === 'INSERT' && c.receiver_email.toLowerCase() === myEmail) {
+                        callId = c.id;
+                        showUI(c.caller_email, 'in');
+                    }
+
+                    // Если статус звонка изменился
+                    if (payload.eventType === 'UPDATE' && c.id === callId) {
+                        if (c.status === 'active') {
+                            document.getElementById('cs').innerText = "В эфире";
+                            document.getElementById('rt').pause();
                         }
-                        loadHistory(); 
-                    }).subscribe();
+                        if (c.status === 'ended' || c.status === 'rejected') hideUI();
+                    }
+                }).subscribe();
 
-                // Realtime для звонков
-                _sup.channel('calls-realtime')
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'calls' }, payload => {
-                        handleCallUpdate(payload);
-                    }).subscribe();
-
-                loadHistory(); 
-            } else {
-                document.getElementById('auth-overlay').style.display = 'flex';
-            }
+            loadList();
         }
 
         // --- ЛОГИКА ЗВОНКОВ ---
 
         async function startCall() {
-            if (!currentPeer) return;
+            if (!peer) return;
+            console.log("Звоним:", peer);
             const { data, error } = await _sup.from('calls').insert([{
                 caller_email: myEmail,
-                receiver_email: currentPeer,
+                receiver_email: peer.toLowerCase().trim(),
                 status: 'ringing'
             }]).select().single();
-            
-            if (data) {
-                currentCallId = data.id;
-                showCallUI(currentPeer, 'outgoing');
-            }
+
+            if (error) return alert("Ошибка: " + error.message);
+            callId = data.id;
+            showUI(peer, 'out');
         }
 
-        function handleCallUpdate(payload) {
-            const call = payload.new;
-            if (!call) return;
-
-            // Входящий звонок мне
-            if (call.receiver_email === myEmail && call.status === 'ringing' && payload.eventType === 'INSERT') {
-                currentCallId = call.id;
-                showCallUI(call.caller_email, 'incoming');
-            }
-
-            // Если звонок завершен кем-то другим
-            if (currentCallId === call.id && (call.status === 'ended' || call.status === 'rejected')) {
-                hideCallUI();
-            }
-
-            // Если звонок принят
-            if (currentCallId === call.id && call.status === 'active') {
-                document.getElementById('call-status').innerText = "Разговор...";
-                document.getElementById('ringtone').pause();
-            }
-        }
-
-        async function showCallUI(email, type) {
-            const name = await getProfileName(email);
-            document.getElementById('call-name').innerText = name;
-            document.getElementById('call-av').innerText = name[0];
+        function showUI(email, type) {
+            document.getElementById('cn').innerText = email.split('@')[0];
+            document.getElementById('ca').innerText = email[0].toUpperCase();
             document.getElementById('call-overlay').style.display = 'flex';
             
-            if (type === 'incoming') {
-                document.getElementById('call-status').innerText = "Входящий вызов";
-                document.getElementById('accept-btn').style.display = 'flex';
-                document.getElementById('ringtone').play().catch(() => {});
+            if (type === 'in') {
+                document.getElementById('cs').innerText = "Входящий вызов";
+                document.getElementById('ab').style.display = 'flex';
+                document.getElementById('rt').play().catch(() => {});
             } else {
-                document.getElementById('call-status').innerText = "Вызов...";
-                document.getElementById('accept-btn').style.display = 'none';
+                document.getElementById('cs').innerText = "Ожидание ответа...";
+                document.getElementById('ab').style.display = 'none';
             }
         }
 
         async function acceptCall() {
-            if (!currentCallId) return;
-            await _sup.from('calls').update({ status: 'active' }).eq('id', currentCallId);
+            if (!callId) return;
+            await _sup.from('calls').update({ status: 'active' }).eq('id', callId);
         }
 
         async function endCall() {
-            if (!currentCallId) return;
-            await _sup.from('calls').update({ status: 'ended', ended_at: new Date().toISOString() }).eq('id', currentCallId);
-            hideCallUI();
+            if (callId) await _sup.from('calls').update({ status: 'ended' }).eq('id', callId);
+            hideUI();
         }
 
-        function hideCallUI() {
+        function hideUI() {
             document.getElementById('call-overlay').style.display = 'none';
-            document.getElementById('ringtone').pause();
-            document.getElementById('ringtone').currentTime = 0;
-            currentCallId = null;
+            document.getElementById('rt').pause();
+            callId = null;
         }
 
-        // --- ОСТАЛЬНЫЕ ФУНКЦИИ (БЕЗ ИЗМЕНЕНИЙ ДИЗАЙНА) ---
+        // --- БАЗОВЫЙ ЧАТ ---
 
-        const fileInput = document.getElementById('file-input');
-        const photoModal = document.getElementById('photo-modal');
-        const modalCaption = document.getElementById('modal-caption');
-        const previewContainer = document.getElementById('modal-preview-container');
-
-        fileInput.onchange = () => {
-            const files = fileInput.files;
-            if (files.length === 0) return;
-            previewContainer.innerHTML = "";
-            Array.from(files).forEach(file => {
-                const url = URL.createObjectURL(file);
-                const item = document.createElement('div');
-                item.className = "preview-item";
-                if (file.type.startsWith('image/')) item.innerHTML = `<img src="${url}">`;
-                else if (file.type.startsWith('video/')) item.innerHTML = `<video src="${url}"></video>`;
-                else {
-                    const ext = file.name.split('.').pop().toUpperCase();
-                    item.innerHTML = `<div class="file-icon-label">📄<br>${ext}<br>${file.name.substring(0,10)}...</div>`;
-                }
-                previewContainer.appendChild(item);
-            });
-            photoModal.style.display = 'flex';
-        };
-
-        function cancelFile() { fileInput.value = ""; modalCaption.value = ""; photoModal.style.display = 'none'; }
-
-        async function sendWithFile() {
-            const files = fileInput.files;
-            const text = modalCaption.value.trim();
-            if (files.length === 0 || !currentPeer) return;
-            const btn = document.getElementById('modal-send-btn');
-            btn.innerText = "ЗАГРУЗКА..."; btn.disabled = true;
-            try {
-                let uploadedUrls = [];
-                for (let file of files) {
-                    const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-                    const { error: uploadError } = await _sup.storage.from('uploads').upload(fileName, file);
-                    if (uploadError) throw uploadError;
-                    const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
-                    uploadedUrls.push(publicUrl);
-                }
-                await _sup.from('messages').insert([{ text, author_email: myEmail, receiver_email: currentPeer, file_url: uploadedUrls }]);
-                cancelFile();
-            } catch (err) { alert(err.message); } finally { btn.innerText = "ОТПРАВИТЬ"; btn.disabled = false; }
-        }
-
-        document.getElementById('modal-send-btn').onclick = sendWithFile;
-
-        async function handleAuth(type) {
+        async function auth(mode) {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-pass').value;
-            let res = type === 'register' ? await _sup.auth.signUp({ email, password }) : await _sup.auth.signInWithPassword({ email, password });
-            if (res.error) {
-                document.getElementById('auth-error').innerText = res.error.message;
-                document.getElementById('auth-error').style.display = 'block';
-            } else location.reload();
+            const { error } = mode === 'reg' ? await _sup.auth.signUp({email, password}) : await _sup.auth.signInWithPassword({email, password});
+            if (error) alert(error.message); else location.reload();
         }
 
-        async function logout() { await _sup.auth.signOut(); location.reload(); }
-
-        async function openChat(email) {
-            if (!email) return;
-            email = email.toLowerCase().trim();
-            currentPeer = email;
-            lastRenderedDate = null;
+        async function openChat(e) {
+            peer = e.toLowerCase().trim();
             document.body.classList.add('chat-open');
-            document.getElementById('call-btn-header').style.display = 'block';
-            const name = await getProfileName(email);
-            document.getElementById('chat-title').innerText = name;
-            document.getElementById('header-av').innerText = name[0];
-            const msgContainer = document.getElementById('messages');
-            msgContainer.innerHTML = "";
-            const { data } = await _sup.from('messages').select('*').or(`and(author_email.eq.${myEmail},receiver_email.eq.${currentPeer}),and(author_email.eq.${currentPeer},receiver_email.eq.${myEmail})`).order('created_at', { ascending: true });
-            if (data) data.forEach(render);
-            updateChatListUI();
+            document.getElementById('ct').innerText = peer.split('@')[0];
+            document.getElementById('call-trigger').style.display = 'block';
+            const { data } = await _sup.from('messages').select('*').or(`and(author_email.eq.${myEmail},receiver_email.eq.${peer}),and(author_email.eq.${peer},receiver_email.eq.${myEmail})`).order('created_at');
+            document.getElementById('messages').innerHTML = "";
+            if (data) data.forEach(m => render(m));
         }
 
-        async function loadHistory() {
-            const { data: msgs } = await _sup.from('messages').select('author_email, receiver_email, created_at').or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`).order('created_at', {ascending: false});
-            if (!msgs) return;
-            const emails = [...new Set(msgs.map(m => m.author_email.toLowerCase() === myEmail ? m.receiver_email.toLowerCase() : m.author_email.toLowerCase()))];
-            const list = document.getElementById('chat-list');
+        async function loadList() {
+            const { data } = await _sup.from('messages').select('author_email, receiver_email').or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`);
+            if (!data) return;
+            const peers = [...new Set(data.map(m => m.author_email === myEmail ? m.receiver_email : m.author_email))];
+            const list = document.getElementById('cl');
             list.innerHTML = "";
-            for (const email of emails) {
-                const name = await getProfileName(email);
-                const item = document.createElement('div');
-                item.className = `chat-item ${currentPeer === email ? 'active' : ''}`;
-                item.innerHTML = `<div class="avatar">${name[0]}</div><div style="font-weight:600; font-size:14px;">${name}</div>`;
-                item.onclick = () => openChat(email);
-                list.appendChild(item);
-            }
-        }
-
-        function updateChatListUI() {
-            document.querySelectorAll('.chat-item').forEach(el => el.classList.toggle('active', el.innerText.includes(currentPeer?.split('@')[0])));
+            peers.forEach(p => {
+                const d = document.createElement('div');
+                d.style = "padding:15px; cursor:pointer; border-bottom:1px solid rgba(0,0,0,0.1);";
+                d.innerText = p;
+                d.onclick = () => openChat(p);
+                list.appendChild(d);
+            });
         }
 
         function render(m) {
             const isMine = m.author_email.toLowerCase() === myEmail;
-            const div = document.createElement('div');
-            div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
-            let fHtml = "";
-            if (m.file_url) {
-                const urls = Array.isArray(m.file_url) ? m.file_url : [m.file_url];
-                fHtml = `<div class="photo-grid grid-${Math.min(urls.length, 4)}">`;
-                urls.forEach(url => {
-                    const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
-                    if (cleanUrl.match(/\.(mp4|webm|mov)/i)) fHtml += `<video src="${cleanUrl}" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
-                    else fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)">`;
-                });
-                fHtml += `</div>`;
-            }
-            div.innerHTML = `${fHtml}<div>${m.text || ''}</div><div class="msg-info">${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>`;
-            const msgBox = document.getElementById('messages');
-            msgBox.appendChild(div);
-            msgBox.scrollTop = msgBox.scrollHeight;
+            const d = document.createElement('div');
+            d.className = `msg ${isMine ? 'mine' : 'theirs'}`;
+            d.innerText = m.text;
+            document.getElementById('messages').appendChild(d);
+            document.getElementById('messages').scrollTop = 99999;
         }
 
-        async function getProfileName(email) {
-            if (profileCache[email]) return profileCache[email];
-            const { data } = await _sup.from('user_profiles').select('display_name').eq('email', email).maybeSingle();
-            const name = data?.display_name || email.split('@')[0];
-            profileCache[email] = name;
-            return name;
-        }
-
-        document.getElementById('msg-form').onsubmit = async (e) => {
+        async function send(e) {
             e.preventDefault();
-            const i = document.getElementById('input');
-            if (i.value.trim() && currentPeer) {
-                const text = i.value.trim(); i.value = "";
-                await _sup.from('messages').insert([{ text, author_email: myEmail, receiver_email: currentPeer }]);
-            }
-        };
+            const text = document.getElementById('mi').value;
+            if (!text || !peer) return;
+            document.getElementById('mi').value = "";
+            await _sup.from('messages').insert([{ text, author_email: myEmail, receiver_email: peer }]);
+            render({ text, author_email: myEmail });
+        }
 
-        function goBack() { document.body.classList.remove('chat-open'); currentPeer = null; }
-        
         init();
     </script>
 </body>
