@@ -75,45 +75,19 @@
 
         .date-divider { align-self: center; background: rgba(0,0,0,0.2); color: #BAC1F3; padding: 5px 15px; border-radius: 20px; font-size: 12px; margin: 15px 0; font-weight: 500; opacity: 0.8; }
 
-        /* ОБНОВЛЕННЫЕ СТИЛИ СООБЩЕНИЙ */
-        .msg { width: fit-content; min-width: 80px; max-width: 320px; font-size: 15px; word-wrap: break-word; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        .msg { width: fit-content; min-width: 80px; max-width: 85%; padding: 10px 14px; font-size: 15px; word-wrap: break-word; display: flex; flex-direction: column; }
+        .msg-info { font-size: 10px; opacity: 0.5; margin-top: 4px; align-self: flex-end; display: flex; gap: 4px; }
         .msg-theirs { align-self: flex-start; background: #191a1d; border-radius: 18px 18px 18px 4px; }
         .msg-mine { align-self: flex-end; background: #7058c9; border-radius: 18px 18px 4px 18px; }
 
-        /* Если есть текст, добавляем отступы */
-        .msg-text { padding: 8px 12px; line-height: 1.4; }
-
-        /* Инфо блок под текстом */
-        .msg-info-inline { font-size: 10px; opacity: 0.5; float: right; margin: 4px 0 -2px 8px; display: flex; align-items: center; gap: 4px; }
-
-        /* ОВЕРЛЕЙ ВРЕМЕНИ ПОВЕРХ ФОТО */
-        .msg-info-overlay {
-            position: absolute; bottom: 8px; right: 8px;
-            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-            padding: 3px 8px; border-radius: 12px;
-            display: flex; align-items: center; gap: 4px;
-            font-size: 11px; color: #fff; z-index: 10; pointer-events: none;
-        }
-
-        /* ИСПРАВЛЕННАЯ СЕТКА ФОТО (КОЛЛАЖ) */
-        .photo-grid { 
-            display: grid; gap: 2px; 
-            position: relative;
-            width: 100%;
-            border-radius: 14px 14px 0 0;
-        }
-        
-        /* Скругление всех углов, если нет текста */
-        .msg:not(:has(.msg-text)) .photo-grid { border-radius: 16px; }
-        .msg:not(:has(.msg-text)) { background: transparent !important; }
-
-        .photo-grid img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; display: block; background: #1a1b1e; }
-        
-        .grid-1 img { max-height: 400px; object-fit: contain; }
-        .grid-2 { grid-template-columns: 1fr 1fr; height: 200px; }
-        .grid-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 160px 110px; }
-        .grid-3 img:first-child { grid-column: span 2; }
-        .grid-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 130px 130px; }
+        /* СЕТКА ФОТО */
+        .photo-grid { display: grid; gap: 4px; margin-bottom: 6px; border-radius: 12px; overflow: hidden; width: 100%; max-width: 320px; }
+        .photo-grid img { width: 100%; height: 160px; object-fit: cover; cursor: pointer; display: block; background: rgba(0,0,0,0.1); }
+        .grid-1 img { height: auto; max-height: 300px; object-fit: contain; }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr; }
+        .grid-3 img:first-child { grid-column: span 2; height: 180px; }
+        .grid-4 { grid-template-columns: 1fr 1fr; }
 
         .input-area { padding: 10px 20px; display: flex; align-items: center; gap: 12px; background: #2E3037; }
         .input-wrapper { background: #23242A; flex-grow: 1; border-radius: 15px; padding: 12px 15px; display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.05); }
@@ -150,7 +124,8 @@
                 <span style="font-weight: bold;">Отправить фото</span>
                 <span onclick="cancelFile()" style="cursor: pointer; font-size: 24px;">×</span>
             </div>
-            <div class="modal-body" id="modal-preview-container"></div>
+            <div class="modal-body" id="modal-preview-container">
+                </div>
             <div class="modal-footer">
                 <input id="modal-caption" placeholder="Добавьте подпись..." autocomplete="off">
                 <button class="modal-send-btn" id="modal-send-btn">ОТПРАВИТЬ</button>
@@ -267,14 +242,18 @@
 
             try {
                 let uploadedUrls = [];
+
+                // Загружаем все файлы
                 for (let file of files) {
                     const fileExt = file.name.split('.').pop();
                     const fileName = `img_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+                    
                     const { data: uploadData, error: uploadError } = await _sup.storage
                         .from('uploads')
                         .upload(fileName, file);
 
                     if (uploadError) throw uploadError;
+
                     const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
                     uploadedUrls.push(publicUrl);
                 }
@@ -284,12 +263,13 @@
                     author_email: myEmail, 
                     receiver_email: currentPeer,
                     is_read: false,
-                    file_url: uploadedUrls,
+                    file_url: uploadedUrls, // Теперь отправляем массив
                     file_type: files[0].type,
                     created_at: new Date().toISOString()
                 }]);
 
                 if (insertError) throw insertError;
+                
                 cancelFile();
             } catch (err) {
                 console.error("Ошибка загрузки:", err);
@@ -350,16 +330,20 @@
             email = email.toLowerCase().trim();
             currentPeer = email;
             lastRenderedDate = null;
+            
             document.body.classList.add('chat-open');
             const name = await getProfileName(email);
             document.getElementById('chat-title').innerText = name;
             document.getElementById('header-av').innerText = name[0];
+            
             const msgContainer = document.getElementById('messages');
             msgContainer.innerHTML = "";
+            
             const { data } = await _sup.from('messages')
                 .select('*')
                 .or(`and(author_email.eq.${myEmail},receiver_email.eq.${currentPeer}),and(author_email.eq.${currentPeer},receiver_email.eq.${myEmail})`)
                 .order('created_at', { ascending: true });
+            
             if (data) data.forEach(render);
             updateChatListUI();
         }
@@ -369,11 +353,14 @@
                 .select('author_email, receiver_email, created_at')
                 .or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`)
                 .order('created_at', {ascending: false});
+
             const list = document.getElementById('chat-list');
             if (!msgs) return;
+
             const hidden = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
             const emails = [...new Set(msgs.map(m => m.author_email.toLowerCase() === myEmail ? m.receiver_email.toLowerCase() : m.author_email.toLowerCase()))]
                             .filter(e => !hidden.includes(e));
+
             list.innerHTML = "";
             for (const email of emails) {
                 const name = await getProfileName(email);
@@ -383,8 +370,10 @@
                 item.innerHTML = `<div class="avatar">${name[0]}</div><div style="font-weight:600; font-size:14px;">${name}</div>`;
                 item.onclick = () => openChat(email);
                 item.oncontextmenu = (e) => { e.preventDefault(); openDeleteMenu(email); };
+                
                 item.ontouchstart = () => pressTimer = setTimeout(() => openDeleteMenu(email), 600);
                 item.ontouchend = () => clearTimeout(pressTimer);
+
                 list.appendChild(item);
             }
         }
@@ -412,50 +401,33 @@
             const div = document.createElement('div');
             div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
             
-            const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            const tick = isMine ? (m.is_read ? '✓✓' : '✓') : '';
-            
-            let photoHtml = "";
-            let infoHtml = "";
-
-            // ОБРАБОТКА ФОТО
+            let fHtml = "";
             if (m.file_url) {
+                // Преобразуем в массив, если пришла строка (для совместимости)
                 const urls = Array.isArray(m.file_url) ? m.file_url : [m.file_url];
                 const count = urls.length;
+                
                 if (count > 0) {
-                    const gridClass = count >= 4 ? 'grid-4' : `grid-${count}`;
-                    photoHtml = `<div class="photo-grid ${gridClass}">`;
-                    urls.forEach((url, idx) => {
-                        if (idx < 4) {
-                            const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
-                            photoHtml += `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}', '_blank')">`;
-                        }
+                    fHtml = `<div class="photo-grid grid-${Math.min(count, 4)}">`;
+                    urls.forEach(url => {
+                        const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
+                        fHtml += `<img src="${cleanUrl}" onclick="window.open('${cleanUrl}', '_blank')" onerror="this.style.display='none'">`;
                     });
-                    
-                    // Если нет текста, рисуем время поверх фото
-                    if (!m.text) {
-                        photoHtml += `
-                            <div class="msg-info-overlay">
-                                ${time} <span style="font-weight:bold; color:#6EBDFD;">${tick}</span>
-                            </div>`;
-                    }
-                    photoHtml += `</div>`;
+                    fHtml += `</div>`;
                 }
             }
 
-            // ОБРАБОТКА ТЕКСТА
-            let textHtml = "";
-            if (m.text) {
-                textHtml = `
-                    <div class="msg-text">
-                        ${m.text}
-                        <div class="msg-info-inline">
-                            ${time} <span style="font-weight:bold; color:#58BFFF;">${tick}</span>
-                        </div>
-                    </div>`;
-            }
-
-            div.innerHTML = photoHtml + textHtml;
+            const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            const tick = isMine ? (m.is_read ? '✓✓' : '✓') : '';
+            const textContent = m.text ? `<div style="white-space: pre-wrap;">${m.text}</div>` : "";
+            
+            div.innerHTML = `
+                ${fHtml}
+                ${textContent}
+                <div class="msg-info">
+                    <span>${time}</span> 
+                    <span style="font-weight:bold; color:#58BFFF;">${tick}</span>
+                </div>`;
                 
             const msgBox = document.getElementById('messages');
             msgBox.appendChild(div);
@@ -491,6 +463,7 @@
             currentPeer = null; 
             updateChatListUI();
         }
+        
         init();
     </script>
 </body>
