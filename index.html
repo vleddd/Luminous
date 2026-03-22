@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v1.0</title>
+    <title>Luminous v1.1</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -11,20 +11,17 @@
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: var(--bg); color: #fff; height: 100dvh; display: flex; overflow: hidden; }
         
-        /* Sidebar */
         #sidebar { width: 300px; background: var(--bg); border-right: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; }
         #cl { flex-grow: 1; overflow-y: auto; }
         .chat-item { padding: 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .chat-item:active { background: rgba(255,255,255,0.1); }
 
-        /* Main Chat */
         #main-chat { flex-grow: 1; display: flex; flex-direction: column; background: var(--chat-bg); position: relative; }
         #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px 15px; border-radius: 15px; max-width: 80%; line-height: 1.4; word-wrap: break-word; position: relative; }
+        .msg { padding: 10px 15px; border-radius: 15px; max-width: 80%; line-height: 1.4; word-wrap: break-word; }
         .msg.mine { align-self: flex-end; background: var(--accent); }
         .msg.theirs { align-self: flex-start; background: var(--panel); }
 
-        /* Call UI */
         #call-overlay {
             position: fixed; inset: 0; background: #141517; z-index: 50000;
             display: none; flex-direction: column; align-items: center; justify-content: space-around; padding: 40px;
@@ -35,7 +32,6 @@
         .btn-mute { background: #565C69; width: 55px; height: 55px; margin-top: 20px; }
         .muted { background: #ff9f43 !important; }
 
-        /* Header & Inputs */
         #chat-header { padding: 15px 20px; background: var(--bg); display: flex; align-items: center; min-height: 65px; }
         #call-icon { font-size: 24px; cursor: pointer; margin-left: auto; display: none; color: #2ecc71; }
         input { background: var(--panel); border: none; color: #fff; padding: 12px; border-radius: 10px; outline: none; }
@@ -99,12 +95,10 @@
             myEmail = session.user.email.toLowerCase().trim();
             document.getElementById('auth-overlay').style.display = 'none';
 
-            // НОВОЕ: Проверка/Создание профиля (чтобы не было ошибки Foreign Key)
-            const { data: prof } = await _sup.from('user_profiles').select('email').eq('email', myEmail).single();
-            if (!prof) await _sup.from('user_profiles').insert([{ email: myEmail, display_name: myEmail.split('@')[0] }]);
+            // Авто-создание профиля, чтобы не было ошибок со связями
+            await _sup.from('user_profiles').upsert([{ email: myEmail, display_name: myEmail.split('@')[0] }], { onConflict: 'email' });
 
-            // PeerJS Setup
-            const safeId = myEmail.replace(/[^a-zA-Z0-9]/g, "");
+            const safeId = myEmail.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
             peerInstance = new Peer(safeId);
             
             peerInstance.on('call', async (incoming) => {
@@ -113,7 +107,6 @@
                 setupVoice(incoming);
             });
 
-            // Realtime: Сообщения
             _sup.channel('m').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, p => {
                 const m = p.new;
                 if (m.receiver_email === myEmail || m.author_email === myEmail) {
@@ -122,7 +115,6 @@
                 }
             }).subscribe();
 
-            // Realtime: Звонки
             _sup.channel('c').on('postgres_changes', { event: '*', schema: 'public', table: 'calls' }, p => {
                 const c = p.new;
                 if (p.eventType === 'INSERT' && c.receiver_email === myEmail) {
@@ -138,14 +130,13 @@
             loadList();
         }
 
-        // --- ЛОГИКА ЗВОНКА ---
         async function connectVoice() {
             document.getElementById('cs').innerText = "В эфире";
             document.getElementById('rt').pause();
             document.getElementById('mb').style.display = 'block';
             
             if (document.getElementById('ab').style.display === 'none' && !currentCall) {
-                const targetId = peerEmail.replace(/[^a-zA-Z0-9]/g, "");
+                const targetId = peerEmail.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const call = peerInstance.call(targetId, localStream);
                 setupVoice(call);
@@ -154,24 +145,42 @@
 
         function setupVoice(call) {
             currentCall = call;
-            call.on('stream', (remoteStream) => {
+            call.on('stream', (stream) => {
                 const audio = document.getElementById('remote-audio');
-                audio.srcObject = remoteStream;
-                audio.play().catch(() => {});
+                audio.srcObject = stream;
+                audio.play().catch(e => console.log("Нажми на экран для звука"));
             });
         }
 
+        async function startCall() {
+            if (!peerEmail) return;
+            // Проверка на случай ошибки 400 со скрина
+            const { data, error } = await _sup.from('calls').insert([{
+                caller_email: myEmail, 
+                receiver_email: peerEmail, 
+                status: 'ringing'
+            }]).select().single();
+
+            if (error) {
+                console.error("Ошибка звонка:", error);
+                return alert("Не удалось создать звонок. Сначала напишите сообщение этому пользователю.");
+            }
+
+            if (data) {
+                callId = data.id;
+                showCallUI(peerEmail, 'out');
+            }
+        }
+
         async function handleAccept() {
+            if (!callId) return;
             await _sup.from('calls').update({ status: 'active' }).eq('id', callId);
             document.getElementById('ab').style.display = 'none';
         }
 
-        async function startCall() {
-            const { data } = await _sup.from('calls').insert([{
-                caller_email: myEmail, receiver_email: peerEmail, status: 'ringing', type: 'audio'
-            }]).select().single();
-            callId = data.id;
-            showCallUI(peerEmail, 'out');
+        async function endCall() {
+            if (callId) await _sup.from('calls').update({ status: 'ended', ended_at: new Date() }).eq('id', callId);
+            hideCallUI();
         }
 
         function toggleMic() {
@@ -207,7 +216,6 @@
             r.play().then(() => { r.pause(); r.currentTime = 0; }).catch(()=>{});
         }
 
-        // --- ЛОГИКА ЧАТА ---
         async function openChat(e) {
             peerEmail = e.toLowerCase().trim();
             document.getElementById('ct').innerText = peerEmail.split('@')[0];
@@ -248,11 +256,6 @@
             const e = document.getElementById('ae').value; const p = document.getElementById('ap').value;
             const { error } = await _sup.auth.signInWithPassword({email:e, password:p});
             if (error) alert(error.message); else location.reload();
-        }
-
-        async function endCall() {
-            if (callId) await _sup.from('calls').update({ status: 'ended', ended_at: new Date() }).eq('id', callId);
-            hideCallUI();
         }
 
         init();
