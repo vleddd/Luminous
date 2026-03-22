@@ -3,89 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v0.7 - Media & Edit Update</title>
+    <title>Luminous v0.7.1 - Reactive Update</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #25272D; color: #fff; height: 100dvh; display: flex; overflow: hidden; }
 
         /* ОКНО РЕГИСТРАЦИИ */
-        #auth-overlay { position: fixed; inset: 0; background: #1E1F23; z-index: 10000; display: none; align-items: center; justify-content: center; }
-        .auth-card { background: #2E3037; padding: 35px; border-radius: 24px; width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
-        .auth-input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 12px; border: none; background: #23242A; color: #fff; outline: none; font-size: 16px; }
-        .auth-btn { width: 100%; padding: 12px; background: #7058c9; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        #auth-overlay { 
+            position: fixed; inset: 0; background: #1E1F23; z-index: 10000; 
+            display: none; align-items: center; justify-content: center; 
+        }
+        .auth-card { 
+            background: #2E3037; padding: 35px; border-radius: 24px; width: 340px; 
+            border: 1px solid rgba(255,255,255,0.1); text-align: center; 
+        }
+        .auth-input { 
+            width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 12px; 
+            border: none; background: #23242A; color: #fff; outline: none; font-size: 16px; 
+        }
+        .auth-btn { 
+            width: 100%; padding: 12px; background: #7058c9; color: white; border: none; 
+            border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; 
+        }
         .auth-secondary { background: transparent; color: #6EBDFD; border: 1px solid #6EBDFD; }
 
-        /* КОНТЕКСТНОЕ МЕНЮ */
-        #msg-context-menu {
-            position: fixed; z-index: 40000; display: none;
-            background: #2E3037; border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px; width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            overflow: hidden;
+        /* МОДАЛКА УДАЛЕНИЯ (Обновлено для сообщений и чатов) */
+        #delete-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 20000;
+            display: none; align-items: center; justify-content: center; padding: 20px;
         }
-        .menu-item { padding: 12px 15px; cursor: pointer; font-size: 14px; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
-        .menu-item:hover { background: #3D3F46; }
-        .menu-item.del { color: #ff4d4d; }
-
-        /* РАЗМЫТИЕ ПРИ ВЫДЕЛЕНИИ */
-        #msg-backdrop {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.4); 
-            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-            z-index: 35000; display: none;
+        .delete-card {
+            background: #2E3037; padding: 25px; border-radius: 24px; width: 100%; max-width: 340px;
+            border: 1px solid rgba(255,255,255,0.1); text-align: center;
         }
-        .msg.highlighted { z-index: 36000 !important; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-
-        /* МОДАЛКА УДАЛЕНИЯ */
-        #delete-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 50000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .delete-card { background: #2E3037; padding: 25px; border-radius: 24px; width: 100%; max-width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
         .del-btn-red { width: 100%; padding: 12px; background: #ff4d4d; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .del-btn-gray { width: 100%; padding: 12px; background: #3D3F46; color: white; border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px; }
 
-        /* ПРЕДПРОСМОТР */
-        #photo-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 30000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: #2E3037; border-radius: 24px; width: 100%; max-width: 450px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1); }
+        /* МОДАЛКА ПРЕДПРОСМОТРА */
+        #photo-modal {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 30000;
+            display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-content {
+            background: #2E3037; border-radius: 24px; width: 100%; max-width: 450px;
+            overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1);
+        }
         .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .modal-body { padding: 15px; background: #1a1b1e; max-height: 60vh; overflow-y: auto; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
-        .preview-item { position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; background: #23242A; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); }
+        .modal-body { 
+            padding: 15px; 
+            background: #1a1b1e; 
+            max-height: 60vh; 
+            overflow-y: auto; 
+            display: grid; 
+            gap: 10px; 
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); 
+        }
+        .preview-item {
+            position: relative; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden;
+            background: #23242A; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);
+        }
         .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
+        .file-icon-label { font-size: 11px; text-align: center; word-break: break-all; padding: 5px; color: #BAC1F3; }
         .modal-footer { padding: 15px 20px; background: #2E3037; display: flex; gap: 12px; align-items: center; }
         #modal-caption { background: #23242A; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; padding: 10px 15px; border-radius: 12px; }
+        .modal-send-btn { background: #7058c9; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
 
-        /* FULL VIEW */
-        #full-viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 60000; display: none; align-items: center; justify-content: center; }
+        /* FULL VIEW OVERLAY */
+        #full-viewer {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 50000;
+            display: none; align-items: center; justify-content: center; padding: 10px;
+        }
+        #viewer-content { max-width: 100%; max-height: 100%; position: relative; }
         #viewer-content img, #viewer-content video { max-width: 100%; max-height: 95vh; border-radius: 8px; }
 
-        /* ИНТЕРФЕЙС */
+        /* САЙДБАР */
         #sidebar { width: 300px; background: #25272D; border-right: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 10px; background: #252935; display: flex; align-items: center; gap: 10px; border-radius: 10px; margin: 5px; }
         #search-input { background: #33353B; border: none; border-radius: 40px; color: #fff; outline: none; padding: 8px 15px; flex-grow: 1; font-size: 14px; }
         #chat-list { overflow-y: auto; flex-grow: 1; padding: 10px; }
-        .chat-item { border-radius: 15px; margin-bottom: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
+
+        .chat-item {
+            background: transparent; border-radius: 15px; margin-bottom: 8px; padding: 10px; 
+            display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s;
+            user-select: none; -webkit-user-select: none;
+        }
         .chat-item.active { background: #34373F !important; border: 1px solid #565C69; }
 
+        /* ОКНО ЧАТА */
         #main-chat { flex-grow: 1; display: flex; flex-direction: column; background: #2E3037; position: relative; }
         #chat-header { padding: 10px 20px; background: #25272D; display: flex; align-items: center; gap: 12px; height: 60px; margin: 5px; border-radius: 10px; }
         #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
-        .msg { width: fit-content; min-width: 80px; max-width: 85%; padding: 10px 14px; font-size: 15px; word-wrap: break-word; display: flex; flex-direction: column; position: relative; transition: transform 0.1s; }
+        .date-divider { align-self: center; background: rgba(0,0,0,0.2); color: #BAC1F3; padding: 5px 15px; border-radius: 20px; font-size: 12px; margin: 15px 0; font-weight: 500; opacity: 0.8; }
+
+        .msg { 
+            width: fit-content; min-width: 80px; max-width: 85%; padding: 10px 14px; font-size: 15px; 
+            word-wrap: break-word; display: flex; flex-direction: column; 
+            user-select: none; -webkit-user-select: none; transition: opacity 0.3s, transform 0.3s;
+        }
         .msg-info { font-size: 10px; opacity: 0.5; margin-top: 4px; align-self: flex-end; display: flex; gap: 4px; }
         .msg-theirs { align-self: flex-start; background: #191a1d; border-radius: 18px 18px 18px 4px; }
         .msg-mine { align-self: flex-end; background: #7058c9; border-radius: 18px 18px 4px 18px; }
-        .edited-mark { font-style: italic; margin-right: 3px; }
 
+        /* СЕТКА ФОТО/ВИДЕО */
         .photo-grid { display: grid; gap: 4px; margin-bottom: 6px; border-radius: 12px; overflow: hidden; width: 100%; max-width: 320px; }
-        .photo-grid img, .photo-grid video { width: 100%; height: 160px; object-fit: cover; cursor: pointer; display: block; }
+        .photo-grid img, .photo-grid video { width: 100%; height: 160px; object-fit: cover; cursor: pointer; display: block; background: rgba(0,0,0,0.1); }
+        .grid-1 img, .grid-1 video { height: auto; max-height: 300px; object-fit: contain; }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr; }
+        .grid-3 *:first-child { grid-column: span 2; height: 180px; }
+        .grid-4 { grid-template-columns: 1fr 1fr; }
 
         .input-area { padding: 10px 20px; display: flex; align-items: center; gap: 12px; background: #2E3037; }
         .input-wrapper { background: #23242A; flex-grow: 1; border-radius: 15px; padding: 12px 15px; display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.05); }
         #input { background: none; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; }
-        .send-btn { color: #6EBDFD; font-size: 28px; cursor: pointer; background: none; border: none; }
+        .send-btn { color: #6EBDFD; font-size: 28px; cursor: pointer; background: none; border: none; display: flex; align-items: center; transition: 0.2s; }
 
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #E0E2E5; color: #444; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #E0E2E5; color: #444; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; text-transform: uppercase; }
 
         @media (max-width: 768px) {
             #sidebar { width: 100%; position: absolute; height: 100%; z-index: 10; }
             #main-chat { width: 100%; position: absolute; height: 100%; z-index: 20; transform: translateX(100%); transition: 0.25s ease; }
             body.chat-open #main-chat { transform: translateX(0); }
+            .input-area { padding: 10px; }
             #back-mobile { display: block !important; }
         }
     </style>
@@ -103,13 +143,6 @@
         </div>
     </div>
 
-    <div id="msg-backdrop" onclick="hideContextMenu()"></div>
-    <div id="msg-context-menu">
-        <div class="menu-item" onclick="copyMsgText()">📋 Копировать</div>
-        <div class="menu-item mine-only" id="menu-edit-btn" onclick="startEditMsg()">✏️ Изменить</div>
-        <div class="menu-item del" onclick="openMsgDeleteModal()">🗑️ Удалить</div>
-    </div>
-
     <div id="photo-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -119,27 +152,29 @@
             <div class="modal-body" id="modal-preview-container"></div>
             <div class="modal-footer">
                 <input id="modal-caption" placeholder="Добавьте подпись..." autocomplete="off">
-                <button class="auth-btn" style="width:auto; margin:0;" id="modal-send-btn">ОТПРАВИТЬ</button>
+                <button class="modal-send-btn" id="modal-send-btn">ОТПРАВИТЬ</button>
             </div>
         </div>
     </div>
 
     <div id="full-viewer" onclick="this.style.display='none'">
         <div id="viewer-content"></div>
+        <span style="position:absolute; top:20px; right:30px; font-size:40px; cursor:pointer;">×</span>
     </div>
 
     <div id="delete-modal" onclick="closeDeleteModal()">
         <div class="delete-card" onclick="event.stopPropagation()">
-            <h3 style="margin-top: 0; color: #fff;">Удалить сообщение?</h3>
-            <button id="del-msg-me" class="del-btn-gray">Удалить у меня</button>
-            <button id="del-msg-both" class="del-btn-red">Удалить у обоих</button>
+            <h3 id="delete-title" style="margin-top: 0; color: #fff;">Удалить?</h3>
+            <p id="delete-info" style="color: #8E94A5; font-size: 14px; margin-bottom: 20px;"></p>
+            <button id="del-only-me" class="del-btn-gray">Удалить только у меня</button>
+            <button id="del-both" class="del-btn-red">Удалить у обоих</button>
             <button onclick="closeDeleteModal()" style="background:none; border:none; color:#8E94A5; cursor:pointer; width:100%; padding:10px;">Отмена</button>
         </div>
     </div>
 
     <div id="sidebar">
         <div class="sidebar-header">
-            <div style="cursor:pointer; opacity:0.6;">☰</div>
+            <div class="menu-btn" style="cursor:pointer; opacity:0.6;">☰</div>
             <input id="search-input" placeholder="Search" onkeyup="if(event.key==='Enter') openChat(this.value)">
             <div style="color: #BAC1F3; font-weight: bold; font-size: 14px; margin-left: auto;">Luminous</div>
         </div>
@@ -161,7 +196,7 @@
                 <label for="file-input" style="font-size: 20px; cursor: pointer; transform: rotate(45deg); opacity: 0.7;">📎</label>
                 <input type="file" id="file-input" style="display:none" multiple>
             </div>
-            <button type="submit" class="send-btn" id="send-main-btn">➤</button>
+            <button type="submit" class="send-btn">➤</button>
         </form>
     </div>
 
@@ -170,7 +205,13 @@
         const _sup = supabase.createClient('https://rlbrnsjluipocxommmvx.supabase.co', 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG');
 
         let myEmail = "", currentPeer = null, profileCache = {}, lastRenderedDate = null;
-        let selectedMsgId = null, selectedMsgEl = null, isEditing = false, longPressTimer = null;
+        let chatToDelete = null, msgToDeleteId = null, msgToDeleteEl = null;
+        let pressTimer = null;
+
+        const fileInput = document.getElementById('file-input');
+        const photoModal = document.getElementById('photo-modal');
+        const modalCaption = document.getElementById('modal-caption');
+        const previewContainer = document.getElementById('modal-preview-container');
 
         async function init() {
             const { data: { session } } = await _sup.auth.getSession();
@@ -178,143 +219,196 @@
                 myEmail = session.user.email.toLowerCase().trim();
                 document.getElementById('auth-overlay').style.display = 'none';
                 
-                _sup.channel('db-changes')
+                // Realtime для новых сообщений И удалений
+                _sup.channel('messages-realtime')
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
                         if (payload.eventType === 'INSERT') {
                             const m = payload.new;
-                            if ((m.author_email === myEmail && m.receiver_email === currentPeer) || (m.author_email === currentPeer && m.receiver_email === myEmail)) {
+                            if ((m.author_email === myEmail && m.receiver_email === currentPeer) || 
+                                (m.author_email === currentPeer && m.receiver_email === myEmail)) {
                                 render(m);
                             }
-                        } else if (payload.eventType === 'UPDATE' || payload.eventType === 'DELETE') {
-                            if (currentPeer) openChat(currentPeer); // Перезагружаем чат при правках
+                        } else if (payload.eventType === 'DELETE') {
+                            const el = document.getElementById(`msg-${payload.old.id}`);
+                            if (el) {
+                                el.style.opacity = "0";
+                                el.style.transform = "scale(0.8)";
+                                setTimeout(() => el.remove(), 300);
+                            }
                         }
-                        loadHistory();
-                    }).subscribe();
+                        loadHistory(); 
+                    })
+                    .subscribe();
 
-                loadHistory();
+                loadHistory(); 
             } else {
                 document.getElementById('auth-overlay').style.display = 'flex';
             }
         }
 
-        // --- ЛОГИКА КОНТЕКСТНОГО МЕНЮ ---
-
-        function showContextMenu(e, msgId, isMine, element) {
-            e.preventDefault();
-            selectedMsgId = msgId;
-            selectedMsgEl = element;
-            
-            const menu = document.getElementById('msg-context-menu');
-            const backdrop = document.getElementById('msg-backdrop');
-            
-            // Скрываем "Изменить" для чужих сообщений
-            document.querySelectorAll('.mine-only').forEach(el => el.style.display = isMine ? 'flex' : 'none');
-            
-            // Эффект выделения
-            element.classList.add('highlighted');
-            backdrop.style.display = 'block';
-
-            menu.style.display = 'block';
-            
-            // Позиционирование под сообщением
-            const rect = element.getBoundingClientRect();
-            let top = rect.bottom + 5;
-            let left = rect.left;
-            
-            if (top + 150 > window.innerHeight) top = rect.top - 150;
-            if (left + 180 > window.innerWidth) left = window.innerWidth - 190;
-
-            menu.style.top = top + "px";
-            menu.style.left = left + "px";
+        // --- МОБИЛЬНЫЕ СОБЫТИЯ ---
+        function attachLongPress(el, callback) {
+            el.addEventListener('touchstart', (e) => {
+                pressTimer = setTimeout(() => {
+                    if (window.navigator.vibrate) window.navigator.vibrate(50);
+                    callback(e);
+                }, 600);
+            }, { passive: true });
+            el.addEventListener('touchend', () => clearTimeout(pressTimer));
+            el.addEventListener('touchmove', () => clearTimeout(pressTimer));
+            el.oncontextmenu = (e) => { e.preventDefault(); callback(e); };
         }
 
-        function hideContextMenu() {
-            if (selectedMsgEl) selectedMsgEl.classList.remove('highlighted');
-            document.getElementById('msg-context-menu').style.display = 'none';
-            document.getElementById('msg-backdrop').style.display = 'none';
+        // --- УДАЛЕНИЕ ---
+        function closeDeleteModal() { 
+            document.getElementById('delete-modal').style.display = 'none'; 
+            chatToDelete = null; msgToDeleteId = null; msgToDeleteEl = null;
         }
 
-        function copyMsgText() {
-            const text = selectedMsgEl.querySelector('.text-content')?.innerText || "";
-            navigator.clipboard.writeText(text);
-            hideContextMenu();
-        }
-
-        function startEditMsg() {
-            const text = selectedMsgEl.querySelector('.text-content')?.innerText || "";
-            const input = document.getElementById('input');
-            input.value = text;
-            input.focus();
-            isEditing = true;
-            document.getElementById('send-main-btn').innerText = "✅";
-            hideContextMenu();
-        }
-
-        function openMsgDeleteModal() {
-            hideContextMenu();
+        function openDeleteMenu(email) {
+            chatToDelete = email;
+            document.getElementById('delete-title').innerText = "Удалить чат?";
+            getProfileName(email).then(name => {
+                document.getElementById('delete-info').innerText = `Чат с ${name}`;
+            });
             document.getElementById('delete-modal').style.display = 'flex';
-            const isMine = selectedMsgEl.classList.contains('msg-mine');
-            document.getElementById('del-msg-both').style.display = isMine ? 'block' : 'none';
-            
-            document.getElementById('del-msg-me').onclick = () => confirmDeleteMsg('me');
-            document.getElementById('del-msg-both').onclick = () => confirmDeleteMsg('both');
+            document.getElementById('del-only-me').style.display = 'block';
+            document.getElementById('del-only-me').onclick = () => confirmDeleteChat('me');
+            document.getElementById('del-both').onclick = () => confirmDeleteChat('both');
         }
 
-        async function confirmDeleteMsg(mode) {
+        function openMsgDeleteMenu(id, element) {
+            msgToDeleteId = id;
+            msgToDeleteEl = element;
+            document.getElementById('delete-title').innerText = "Удалить сообщение?";
+            document.getElementById('delete-info').innerText = "Это действие нельзя отменить.";
+            document.getElementById('delete-modal').style.display = 'flex';
+            document.getElementById('del-only-me').style.display = 'none'; // Для сообщений только "у обоих" (в БД)
+            document.getElementById('del-both').onclick = () => confirmDeleteMsg();
+        }
+
+        async function confirmDeleteChat(mode) {
+            if (!chatToDelete) return;
             if (mode === 'both') {
-                await _sup.from('messages').delete().eq('id', selectedMsgId);
+                await _sup.from('messages').delete().or(`and(author_email.eq.${myEmail},receiver_email.eq.${chatToDelete}),and(author_email.eq.${chatToDelete},receiver_email.eq.${myEmail})`);
             } else {
-                // Логика "удалить у меня" обычно требует отдельной колонки в БД, 
-                // здесь просто скроем локально для простоты или удалим, если это ваше сообщение
-                await _sup.from('messages').delete().eq('id', selectedMsgId);
+                let hidden = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
+                if(!hidden.includes(chatToDelete)) hidden.push(chatToDelete);
+                localStorage.setItem('hidden_chats', JSON.stringify(hidden));
             }
+            if (currentPeer === chatToDelete) goBack();
+            closeDeleteModal();
+            loadHistory();
+        }
+
+        async function confirmDeleteMsg() {
+            if (!msgToDeleteId) return;
+            // Реактивное скрытие сразу для инициатора
+            if (msgToDeleteEl) {
+                msgToDeleteEl.style.opacity = "0";
+                msgToDeleteEl.style.transform = "scale(0.8)";
+                setTimeout(() => msgToDeleteEl.remove(), 300);
+            }
+            // Удаление из базы (сработает для обоих через Realtime)
+            await _sup.from('messages').delete().eq('id', msgToDeleteId);
             closeDeleteModal();
         }
 
-        function closeDeleteModal() {
-            document.getElementById('delete-modal').style.display = 'none';
+        // --- РАБОТА С ФАЙЛАМИ ---
+        fileInput.onchange = () => {
+            const files = fileInput.files;
+            if (files.length === 0) return;
+            previewContainer.innerHTML = "";
+            Array.from(files).forEach(file => {
+                const url = URL.createObjectURL(file);
+                const item = document.createElement('div');
+                item.className = "preview-item";
+                if (file.type.startsWith('image/')) item.innerHTML = `<img src="${url}">`;
+                else if (file.type.startsWith('video/')) item.innerHTML = `<video src="${url}"></video>`;
+                else {
+                    const ext = file.name.split('.').pop().toUpperCase();
+                    item.innerHTML = `<div class="file-icon-label">📄<br>${ext}<br>${file.name.substring(0,10)}...</div>`;
+                }
+                previewContainer.appendChild(item);
+            });
+            photoModal.style.display = 'flex';
+        };
+
+        function cancelFile() { fileInput.value = ""; modalCaption.value = ""; photoModal.style.display = 'none'; }
+
+        async function sendWithFile() {
+            const files = fileInput.files;
+            const text = modalCaption.value.trim();
+            if (files.length === 0 || !currentPeer) return;
+            const btn = document.getElementById('modal-send-btn');
+            btn.innerText = "ЗАГРУЗКА..."; btn.disabled = true;
+            try {
+                let uploadedUrls = [];
+                for (let file of files) {
+                    const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${file.name.split('.').pop()}`;
+                    const { error: uploadError } = await _sup.storage.from('uploads').upload(fileName, file);
+                    if (uploadError) throw uploadError;
+                    const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
+                    uploadedUrls.push(publicUrl);
+                }
+                await _sup.from('messages').insert([{ 
+                    text: text || null, author_email: myEmail, receiver_email: currentPeer,
+                    is_read: false, file_url: uploadedUrls, created_at: new Date().toISOString()
+                }]);
+                cancelFile();
+            } catch (err) { alert("Ошибка загрузки: " + err.message); }
+            finally { btn.innerText = "ОТПРАВИТЬ"; btn.disabled = false; }
         }
 
-        // --- ОСНОВНЫЕ ФУНКЦИИ ---
+        document.getElementById('modal-send-btn').onclick = sendWithFile;
 
-        async function handleAuth(type) {
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-pass').value;
-            let res = type === 'register' ? await _sup.auth.signUp({email, password}) : await _sup.auth.signInWithPassword({email, password});
-            if (res.error) {
-                const err = document.getElementById('auth-error');
-                err.innerText = res.error.message; err.style.display = 'block';
-            } else location.reload();
-        }
-
+        // --- ЧАТ И СООБЩЕНИЯ ---
         async function openChat(email) {
-            currentPeer = email.toLowerCase().trim();
+            if (!email) return;
+            email = email.toLowerCase().trim();
+            currentPeer = email;
             lastRenderedDate = null;
             document.body.classList.add('chat-open');
-            const name = await getProfileName(currentPeer);
+            const name = await getProfileName(email);
             document.getElementById('chat-title').innerText = name;
             document.getElementById('header-av').innerText = name[0];
-            
             const msgContainer = document.getElementById('messages');
             msgContainer.innerHTML = "";
-            
-            const { data } = await _sup.from('messages')
-                .select('*')
+            const { data } = await _sup.from('messages').select('*')
                 .or(`and(author_email.eq.${myEmail},receiver_email.eq.${currentPeer}),and(author_email.eq.${currentPeer},receiver_email.eq.${myEmail})`)
                 .order('created_at', { ascending: true });
-            
             if (data) data.forEach(render);
             updateChatListUI();
+        }
+
+        async function loadHistory() {
+            const { data: msgs } = await _sup.from('messages').select('author_email, receiver_email, created_at')
+                .or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`).order('created_at', {ascending: false});
+            const list = document.getElementById('chat-list');
+            if (!msgs) return;
+            const hidden = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
+            const emails = [...new Set(msgs.map(m => m.author_email.toLowerCase() === myEmail ? m.receiver_email.toLowerCase() : m.author_email.toLowerCase()))]
+                            .filter(e => !hidden.includes(e));
+            list.innerHTML = "";
+            for (const email of emails) {
+                const name = await getProfileName(email);
+                const item = document.createElement('div');
+                item.className = `chat-item ${currentPeer === email ? 'active' : ''}`;
+                item.setAttribute('data-email', email);
+                item.innerHTML = `<div class="avatar">${name[0]}</div><div style="font-weight:600; font-size:14px;">${name}</div>`;
+                item.onclick = () => openChat(email);
+                attachLongPress(item, () => openDeleteMenu(email));
+                list.appendChild(item);
+            }
         }
 
         function render(m) {
             const date = new Date(m.created_at).toLocaleDateString();
             if (lastRenderedDate !== date) {
                 lastRenderedDate = date;
-                const div = document.createElement('div');
-                div.className = 'date-divider';
-                div.innerText = date === new Date().toLocaleDateString() ? "Сегодня" : date;
-                document.getElementById('messages').appendChild(div);
+                const d = document.createElement('div'); d.className = 'date-divider';
+                d.innerText = date === new Date().toLocaleDateString() ? "Сегодня" : date;
+                document.getElementById('messages').appendChild(d);
             }
 
             const isMine = m.author_email.toLowerCase() === myEmail;
@@ -322,92 +416,72 @@
             div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
             div.id = `msg-${m.id}`;
 
-            // Обработка кликов и удержания
-            div.oncontextmenu = (e) => showContextMenu(e, m.id, isMine, div);
-            div.ontouchstart = (e) => longPressTimer = setTimeout(() => showContextMenu(e, m.id, isMine, div), 600);
-            div.ontouchend = () => clearTimeout(longPressTimer);
-
             let fHtml = "";
             if (m.file_url) {
                 const urls = Array.isArray(m.file_url) ? m.file_url : [m.file_url];
                 fHtml = `<div class="photo-grid grid-${Math.min(urls.length, 4)}">`;
                 urls.forEach(url => {
                     const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
-                    if (cleanUrl.match(/\.(mp4|webm|mov)/i)) {
-                        fHtml += `<video src="${cleanUrl}" onclick="openFullView('${cleanUrl}', true)" muted loop></video>`;
-                    } else {
-                        fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)">`;
-                    }
+                    if (cleanUrl.match(/\.(mp4|webm|mov)/i)) fHtml += `<video src="${cleanUrl}" onclick="event.stopPropagation(); openFullView('${cleanUrl}', true)" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
+                    else if (cleanUrl.match(/\.(jpg|jpeg|png|gif|webp)/i)) fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)">`;
+                    else fHtml += `<div onclick="window.open('${cleanUrl}', '_blank')" style="background:#23242A; padding:15px; border-radius:10px; cursor:pointer; text-align:center; font-size:11px; border:1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center;"><span style="font-size:20px;">📁</span><span style="opacity:0.6; margin-top:5px;">File</span></div>`;
                 });
                 fHtml += `</div>`;
             }
 
             const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            const isEdited = m.updated_at && m.updated_at !== m.created_at;
+            div.innerHTML = `${fHtml}${m.text ? `<div style="white-space: pre-wrap;">${m.text}</div>` : ""}<div class="msg-info"><span>${time}</span><span style="font-weight:bold; color:#58BFFF;">${isMine ? (m.is_read ? '✓✓' : '✓') : ''}</span></div>`;
+            
+            // Удаление сообщения по долгому нажатию
+            attachLongPress(div, () => openMsgDeleteMenu(m.id, div));
 
-            div.innerHTML = `
-                ${fHtml}
-                <div class="text-content" style="white-space: pre-wrap;">${m.text || ""}</div>
-                <div class="msg-info">
-                    ${isEdited ? '<span class="edited-mark">(изм.)</span>' : ''}
-                    <span>${time}</span> 
-                    <span style="font-weight:bold; color:#58BFFF;">${isMine ? (m.is_read ? '✓✓' : '✓') : ''}</span>
-                </div>`;
-                
             const msgBox = document.getElementById('messages');
             msgBox.appendChild(div);
             msgBox.scrollTop = msgBox.scrollHeight;
         }
 
-        document.getElementById('msg-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const input = document.getElementById('input');
-            const text = input.value.trim();
-            if (!text || !currentPeer) return;
-
-            if (isEditing && selectedMsgId) {
-                await _sup.from('messages').update({ text: text, updated_at: new Date().toISOString() }).eq('id', selectedMsgId);
-                isEditing = false;
-                selectedMsgId = null;
-                document.getElementById('send-main-btn').innerText = "➤";
-            } else {
-                await _sup.from('messages').insert([{ text, author_email: myEmail, receiver_email: currentPeer, is_read: false }]);
-            }
-            input.value = "";
-        };
-
-        // --- ВСПОМОГАТЕЛЬНОЕ ---
-        async function loadHistory() {
-            const { data: msgs } = await _sup.from('messages').select('author_email, receiver_email').or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`).order('created_at', {ascending: false});
-            if (!msgs) return;
-            const emails = [...new Set(msgs.map(m => m.author_email.toLowerCase() === myEmail ? m.receiver_email : m.author_email))];
-            const list = document.getElementById('chat-list'); list.innerHTML = "";
-            for (const email of emails) {
-                const name = await getProfileName(email);
-                const item = document.createElement('div');
-                item.className = `chat-item ${currentPeer === email ? 'active' : ''}`;
-                item.innerHTML = `<div class="avatar">${name[0]}</div><div style="font-weight:600; font-size:14px;">${name}</div>`;
-                item.onclick = () => openChat(email);
-                list.appendChild(item);
-            }
-        }
-
+        // --- ВСПОМОГАТЕЛЬНЫЕ ---
         async function getProfileName(email) {
             if (profileCache[email]) return profileCache[email];
             const { data } = await _sup.from('user_profiles').select('display_name').eq('email', email).maybeSingle();
-            profileCache[email] = data?.display_name || email.split('@')[0];
-            return profileCache[email];
+            const name = data?.display_name || email.split('@')[0];
+            profileCache[email] = name; return name;
         }
 
-        function goBack() { document.body.classList.remove('chat-open'); currentPeer = null; }
-        function logout() { _sup.auth.signOut(); location.reload(); }
-        function openFullView(url, isVid) {
+        function openFullView(url, isVideo) {
             const v = document.getElementById('full-viewer');
             const c = document.getElementById('viewer-content');
-            c.innerHTML = isVid ? `<video src="${url}" controls autoplay></video>` : `<img src="${url}">`;
+            c.innerHTML = isVideo ? `<video src="${url}" controls autoplay></video>` : `<img src="${url}">`;
             v.style.display = 'flex';
         }
 
+        document.getElementById('msg-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const i = document.getElementById('input');
+            const text = i.value.trim();
+            if (text && currentPeer) {
+                i.value = "";
+                await _sup.from('messages').insert([{ text, author_email: myEmail, receiver_email: currentPeer, is_read: false, created_at: new Date().toISOString() }]);
+            }
+        };
+
+        async function handleAuth(type) {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-pass').value;
+            let res = type === 'register' ? await _sup.auth.signUp({ email, password }) : await _sup.auth.signInWithPassword({ email, password });
+            if (res.error) {
+                const err = document.getElementById('auth-error');
+                err.innerText = res.error.message; err.style.display = 'block';
+            } else location.reload();
+        }
+
+        function updateChatListUI() {
+            document.querySelectorAll('.chat-item').forEach(el => el.classList.toggle('active', el.getAttribute('data-email') === currentPeer));
+        }
+
+        async function logout() { await _sup.auth.signOut(); location.reload(); }
+        function goBack() { document.body.classList.remove('chat-open'); currentPeer = null; updateChatListUI(); }
+        
         init();
     </script>
 </body>
