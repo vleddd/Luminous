@@ -123,55 +123,58 @@
         #chat-list { overflow-y: auto; flex-grow: 1; padding: 10px; }
 
         /* ОБЫЧНЫЙ (НЕАКТИВНЫЙ) ЧАТ */
+/* --- БАЗОВЫЙ СТИЛЬ ЧАТА (Normal) --- */
 .chat-item {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 10px 15px;
-    margin-bottom: 12px;
+    margin-bottom: 12px; /* Отступ для полоски */
     cursor: pointer;
     user-select: none;
     position: relative;
     box-sizing: border-box;
 
-    /* Плавный переход для всех свойств, включая скругление */
+    /* СУПЕР-БЫСТРАЯ АНИМАЦИЯ (0.2s) */
     transition: 
-        border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+        border-radius 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
         border 0.2s ease, 
-        background 0.3s ease,
-        background-position 0.3s ease;
+        background-position 0.2s ease-out,
+        transform 0.1s ease;
 
-    /* Исходное состояние (Normal) */
+    /* СОСТОЯНИЕ ИЗ FIGMA (Normal: #ADADAD -> #878787, 20% Fill) */
     border-radius: 110px; 
     border: 2px solid rgba(255, 255, 255, 0.3);
     
-    /* Градиент для обычного состояния и подготовки к Hover */
+    /* ГРАДИЕНТ: Справа — серый (Normal), Слева — голубой (Hover) */
     background: linear-gradient(90deg, 
-        rgba(173, 173, 173, 0.2) 0%, 
-        rgba(135, 135, 135, 0.2) 50%, 
-        rgba(144, 217, 249, 0.2) 100%
+        rgba(144, 217, 249, 0.2) 0%,   /* Голубой стоп */
+        rgba(255, 255, 255, 0.2) 40%,  /* Белый стоп */
+        rgba(173, 173, 173, 0.2) 100%  /* Серый стоп (Normal) */
     );
     background-size: 200% 100%;
-    background-position: 0% 0%;
+    background-position: 100% 0%; /* По умолчанию показываем правую (серую) часть */
 
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
 
-/* ХОВЕР: Лайнер выезжает быстрее (0.3s) и меняет скругление */
+/* --- ЭФФЕКТ ПРИ НАВЕДЕНИИ (Hover) --- */
 .chat-item:hover:not(.active) {
-    background-position: 100% 0%; /* Лайнер "выезжает" */
-    border-radius: 100px; /* Плавная смена со 110 до 100 */
+    /* Лайнер выезжает СЛЕВА (смещаем позицию в 0%) */
+    background-position: 0% 0%; 
+    border-radius: 100px;
     border: 2px solid rgba(255, 255, 255, 0.4);
+    transform: translateX(4px); /* Легкий сдвиг вправо для интерактивности */
 }
 
-/* АКТИВНЫЙ ЧАТ: Исправляем смену скругления на 80px */
+/* --- ВЫБРАННЫЙ ЧАТ (Active) --- */
 .chat-item.active {
-    /* Принудительно ставим 80px и фиксируем толщину обводки */
+    /* Скругление 20px (как ты просил) */
     border-radius: 20px !important; 
     border: 3px solid rgba(255, 255, 255, 0.6) !important;
     
-    /* Фиолетовый лайнер (Active) */
+    /* Фиолетовый градиент из Figma */
     background: linear-gradient(90deg, 
         rgba(166, 185, 233, 0.2) 0%, 
         rgba(202, 150, 215, 0.2) 69%, 
@@ -181,22 +184,39 @@
 
     backdrop-filter: blur(20px);
     color: #ffffff;
+    transform: translateX(0);
 }
 
-/* РАЗДЕЛИТЕЛЬ */
+/* --- СЕРАЯ ПОЛОСКА-РАЗДЕЛИТЕЛЬ (0.9px) --- */
 .chat-item::after {
     content: "";
     position: absolute;
-    bottom: -6.45px;
+    bottom: -6.45px; /* Дистанция от блока */
     left: 25px;
     right: 25px;
     height: 0.9px;
     background: rgba(255, 255, 255, 0.1);
-    transition: opacity 0.2s;
+    /* Полоска теперь статична и не исчезает */
 }
 
-.chat-item.active::after {
-    opacity: 0;
+/* Стилизация аватара и текста для сочности */
+.chat-item .avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #333;
+}
+
+.chat-item span {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    transition: 0.2s;
+}
+
+.chat-item.active span {
+    color: #fff;
+    font-weight: 600;
 }
 
         /* ОКНО ЧАТА */
