@@ -128,28 +128,35 @@
             user-select: none;
         }
         .chat-item.active {
-    /* ЦВЕТА И ГРАДИЕНТ (как в твоем дизайне) */
+    /* ФИОЛЕТОВО-ГОЛУБОЙ ГРАДИЕНТ (по твоим стопам из Figma) */
     background: linear-gradient(90deg, 
-        rgba(62, 63, 65, 0.6) 0%, 
-        rgba(34, 36, 40, 0.6) 56%
+        #A6B9E9 0%, 
+        #CA96D7 69%, 
+        #A696D7 100%
     ) !important;
 
-    /* СКРУГЛЕНИЕ (из твоего скриншота Figma) */
+    /* СКРУГЛЕНИЕ */
     border-radius: 80px !important;
 
-    /* ОБВОДКА (Stroke: FFFFFF, 60% opacity, Inside 3px) */
+    /* ОБВОДКА (Белая полупрозрачная, 3px) */
     border: 3px solid rgba(255, 255, 255, 0.6) !important;
     box-sizing: border-box;
 
-    /* ЭФФЕКТЫ (Background blur: 20) */
+    /* ЭФФЕКТЫ */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-
-    /* Плавность перехода */
-    transition: background 0.3s, border 0.3s;
     
-    /* Убедимся, что контент внутри не вылетает за скругление */
-    overflow: hidden;
+    /* Тень, чтобы блок "отрывался" от темного фона сайдбара */
+    box-shadow: 0 4px 20px rgba(166, 185, 233, 0.3);
+
+    /* Цвет текста внутри активного чата (темный или белый для контраста) */
+    color: #ffffff;
+}
+
+/* Опционально: сделаем никнейм внутри активного чата жирнее */
+.chat-item.active span {
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
         /* ОКНО ЧАТА */
