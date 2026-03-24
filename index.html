@@ -187,20 +187,37 @@
 }
 
 /* --- АВАТАРКИ (Исправлено, без черного фона) --- */
+/* КОНТЕЙНЕР АВАТАРКИ */
 .chat-item .avatar {
     width: 45px;
     height: 45px;
     border-radius: 50%;
     flex-shrink: 0;
-    overflow: hidden;
-    background: transparent; /* Никакой лишней заливки */
+    overflow: hidden; /* Обрезает картинку по кругу */
+    position: relative;
+    
+    /* Запасной фон (очень легкий, чтобы не был прозрачным насквозь) */
+    background-color: rgba(255, 255, 255, 0.05); 
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* САМА КАРТИНКА */
 .chat-item .avatar img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Фото не растягивается */
-    display: block;
+    object-fit: cover; /* Важно: фото заполняет круг, не растягиваясь */
+    display: block;    /* Убирает лишние отступы снизу */
+}
+
+/* Если картинки нет, можно добавить иконку пользователя через CSS (опционально) */
+.chat-item .avatar:empty::before {
+    content: "👤";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    opacity: 0.3;
 }
 
 /* --- ПОСТОЯННАЯ ПОЛОСКА-РАЗДЕЛИТЕЛЬ (0.9px) --- */
