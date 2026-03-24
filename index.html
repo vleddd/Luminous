@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Luminous v0.7 - Media Update</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #25272D; color: #fff; height: 100dvh; display: flex; overflow: hidden; }
@@ -77,7 +78,7 @@
         #modal-caption { background: #23242A; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; padding: 10px 15px; border-radius: 12px; }
         .modal-send-btn { background: #7058c9; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
 
-        /* ОКНО ПРОФИЛЯ */
+        /* ОКНО РЕДАКТИРОВАНИЯ МОЕГО ПРОФИЛЯ */
         #profile-overlay {
             position: fixed; inset: 0; background: #1E1F23; z-index: 40000;
             display: none; flex-direction: column;
@@ -90,6 +91,22 @@
         .profile-label { font-size: 12px; color: #6EBDFD; margin-bottom: 5px; padding-left: 5px; }
         .profile-input { background: transparent; border: none; color: #fff; width: 100%; font-size: 16px; outline: none; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 5px; margin-bottom: 15px; }
         .profile-input:focus { border-bottom-color: #7058c9; }
+
+        /* ОКНО ПРОСМОТРА ЧУЖОГО ПРОФИЛЯ (КАК НА СКРИНШОТЕ) */
+        #view-user-modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            z-index: 45000; justify-content: center; align-items: center; backdrop-filter: blur(5px);
+        }
+        .user-info-card { background: #2E3037; width: 380px; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        .user-info-inner { padding: 20px; text-align: center; }
+        .info-avatar-box { width: 110px; height: 110px; border-radius: 50%; background: #7058c9; margin: 0 auto 15px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+        .info-avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+        .info-row { display: flex; align-items: flex-start; padding: 12px 20px; gap: 20px; transition: 0.2s; border-radius: 12px; }
+        .info-row:hover { background: rgba(255,255,255,0.03); }
+        .info-row i { font-size: 18px; color: #6EBDFD; margin-top: 4px; width: 25px; text-align: center; }
+        .info-content { text-align: left; }
+        .info-val { font-size: 15px; color: #fff; }
+        .info-lab { font-size: 12px; color: #8E94A5; }
 
         /* FULL VIEW OVERLAY */
         #full-viewer {
@@ -119,7 +136,7 @@
 
         .date-divider { align-self: center; background: rgba(0,0,0,0.2); color: #BAC1F3; padding: 5px 15px; border-radius: 20px; font-size: 12px; margin: 15px 0; font-weight: 500; opacity: 0.8; }
 
-        .msg { width: fit-content; min-width: 80px; max-width: 85%; padding: 10px 14px; font-size: 15px; word-wrap: break-word; display: flex; flex-direction: column; }
+        .msg { width: fit-content; min-width: 80px; max-width: 85%; padding: 10px 14px; font-size: 15px; word-wrap: break-word; display: flex; flex-direction: column; cursor: default; }
         .msg-info { font-size: 10px; opacity: 0.5; margin-top: 4px; align-self: flex-end; display: flex; gap: 4px; }
         .msg-theirs { align-self: flex-start; background: #191a1d; border-radius: 18px 18px 18px 4px; }
         .msg-mine { align-self: flex-end; background: #7058c9; border-radius: 18px 18px 4px 18px; }
@@ -138,7 +155,7 @@
         #input { background: none; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; }
         .send-btn { color: #6EBDFD; font-size: 28px; cursor: pointer; background: none; border: none; display: flex; align-items: center; transition: 0.2s; }
 
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #E0E2E5; color: #444; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; text-transform: uppercase; overflow: hidden; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #E0E2E5; color: #444; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; text-transform: uppercase; overflow: hidden; cursor: pointer; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
         @media (max-width: 768px) {
@@ -211,6 +228,50 @@
         </div>
     </div>
 
+    <div id="view-user-modal" onclick="closeUserModal()">
+        <div class="user-info-card" onclick="event.stopPropagation()">
+            <div style="padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+                <i class="fas fa-times" onclick="closeUserModal()" style="cursor:pointer; opacity:0.6;"></i>
+                <span style="font-weight: 600;">Информация</span>
+                <i class="fas fa-ellipsis-v" style="opacity:0.4;"></i>
+            </div>
+            <div class="user-info-inner">
+                <div class="info-avatar-box" id="v-avatar">?</div>
+                <h3 id="v-name" style="margin: 10px 0 5px 0;">Name</h3>
+                <div id="v-status" style="font-size: 13px; color: #8E94A5; margin-bottom: 20px;">был(а) недавно</div>
+                
+                <div class="info-row">
+                    <i class="fas fa-envelope"></i>
+                    <div class="info-content">
+                        <div id="v-email" class="info-val">email@test.com</div>
+                        <div class="info-lab">Email</div>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <i class="fas fa-at"></i>
+                    <div class="info-content">
+                        <div id="v-username" class="info-val">@username</div>
+                        <div class="info-lab">Username</div>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="info-content">
+                        <div id="v-bio" class="info-val">Bio text here...</div>
+                        <div class="info-lab">О себе</div>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <i class="fas fa-calendar-alt"></i>
+                    <div class="info-content">
+                        <div id="v-birthday" class="info-val">1 января</div>
+                        <div class="info-lab">Дата рождения</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="full-viewer" onclick="this.style.display='none'">
         <div id="viewer-content"></div>
         <span style="position:absolute; top:20px; right:30px; font-size:40px; cursor:pointer;">×</span>
@@ -238,12 +299,11 @@
     <div id="main-chat">
         <div id="chat-header">
             <div onclick="goBack()" style="cursor:pointer; font-size:24px; display:none; padding-right:10px;" id="back-mobile">‹</div>
-            <div class="avatar" id="header-av">?</div>
-            <div id="chat-title" style="font-weight:600;">Выберите собеседника</div>
-            <div onclick="logout()" style="margin-left: auto; cursor: pointer; opacity: 0.5; font-size: 12px;">Выйти</div>
+            <div class="avatar" id="header-av" onclick="openCurrentPeerProfile()">?</div>
+            <div id="chat-title" style="font-weight:600; cursor:pointer;" onclick="openCurrentPeerProfile()">Выберите собеседника</div>
         </div>
         <div id="messages"></div>
-        <form class="input-area" id="msg-form">
+        <form class="input-area" id="msg-form" onsubmit="event.preventDefault(); sendMessage();">
             <div class="input-wrapper">
                 <div style="font-size: 20px; cursor: pointer; opacity: 0.7;">😊</div>
                 <input id="input" placeholder="Message" autocomplete="off">
@@ -334,10 +394,48 @@
 
             if (error) alert("Ошибка: " + error.message);
             else {
-                profileCache[myEmail] = dispName;
+                profileCache[myEmail] = { name: dispName };
                 toggleProfile(false);
                 loadHistory();
             }
+        }
+
+        // --- ПРОСМОТР ЧУЖИХ ПРОФИЛЕЙ ---
+        async function openUserProfile(email) {
+            if (!email) return;
+            const { data: p, error } = await _sup.from('user_profiles').select('*').eq('email', email).maybeSingle();
+            
+            if (p) {
+                document.getElementById('v-name').innerText = (p.display_name || 'User') + (p.last_name ? ' ' + p.last_name : '');
+                document.getElementById('v-email').innerText = p.email;
+                document.getElementById('v-username').innerText = p.username ? '@' + p.username : 'не указан';
+                document.getElementById('v-bio').innerText = p.bio || 'Нет описания';
+                document.getElementById('v-birthday').innerText = p.birthday || 'не указана';
+                
+                const vAv = document.getElementById('v-avatar');
+                if (p.avatar_url) {
+                    vAv.innerHTML = `<img src="${p.avatar_url}">`;
+                } else {
+                    vAv.innerText = (p.display_name || p.email)[0].toUpperCase();
+                    vAv.style.background = '#7058c9';
+                }
+                document.getElementById('view-user-modal').style.display = 'flex';
+            }
+        }
+
+        function closeUserModal() { document.getElementById('view-user-modal').style.display = 'none'; }
+        function openCurrentPeerProfile() { if (currentPeer) openUserProfile(currentPeer); }
+
+        async function getFullProfile(email) {
+            if (profileCache[email]) return profileCache[email];
+            const { data } = await _sup.from('user_profiles').select('*').eq('email', email).maybeSingle();
+            const profile = {
+                name: data ? (data.display_name || email.split('@')[0]) : email.split('@')[0],
+                avatar: data ? data.avatar_url : null,
+                username: data && data.username ? '@' + data.username : ''
+            };
+            profileCache[email] = profile;
+            return profile;
         }
 
         async function uploadAvatar(input) {
@@ -357,119 +455,156 @@
             document.getElementById('profile-av-letter').style.display = "none";
         }
 
-        function toggleProfile(show) {
-            document.getElementById('profile-overlay').style.display = show ? 'flex' : 'none';
+        function toggleProfile(show) { document.getElementById('profile-overlay').style.display = show ? 'flex' : 'none'; }
+
+        // --- ЧАТ И СООБЩЕНИЯ ---
+        async function openChat(email) {
+            if (!email) return;
+            email = email.toLowerCase().trim();
+            currentPeer = email;
+            lastRenderedDate = null;
+            
+            document.body.classList.add('chat-open');
+            const profile = await getFullProfile(email);
+            document.getElementById('chat-title').innerText = profile.name;
+            
+            const headAv = document.getElementById('header-av');
+            if (profile.avatar) {
+                headAv.innerHTML = `<img src="${profile.avatar}">`;
+            } else {
+                headAv.innerText = profile.name[0].toUpperCase();
+            }
+            
+            const msgContainer = document.getElementById('messages');
+            msgContainer.innerHTML = "";
+            
+            const { data } = await _sup.from('messages')
+                .select('*')
+                .or(`and(author_email.eq.${myEmail},receiver_email.eq.${currentPeer}),and(author_email.eq.${currentPeer},receiver_email.eq.${myEmail})`)
+                .order('created_at', { ascending: true });
+            
+            if (data) data.forEach(render);
+            updateChatListUI();
         }
 
-        // --- ПОИСК ---
+        async function sendMessage() {
+            const input = document.getElementById('input');
+            const val = input.value.trim();
+            if (!val || !currentPeer) return;
+
+            const msgText = val;
+            input.value = "";
+
+            const { error } = await _sup.from('messages').insert([{
+                text: msgText,
+                author_email: myEmail,
+                receiver_email: currentPeer,
+                sender_id: myId,
+                created_at: new Date().toISOString()
+            }]);
+            if (error) console.error(error);
+        }
+
+        function render(m) {
+            renderDateDivider(m.created_at);
+            const isMine = m.author_email.toLowerCase() === myEmail;
+            const div = document.createElement('div');
+            div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
+            
+            let fHtml = "";
+            if (m.file_url) {
+                const urls = Array.isArray(m.file_url) ? m.file_url : [m.file_url];
+                if (urls.length > 0) {
+                    fHtml = `<div class="photo-grid grid-${Math.min(urls.length, 4)}">`;
+                    urls.forEach(url => {
+                        const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
+                        const isVid = cleanUrl.match(/\.(mp4|webm|ogg|mov)/i);
+                        if (isVid) fHtml += `<video src="${cleanUrl}" onclick="openFullView('${cleanUrl}', true)"></video>`;
+                        else fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)">`;
+                    });
+                    fHtml += `</div>`;
+                }
+            }
+
+            const time = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            div.innerHTML = `
+                ${fHtml}
+                ${m.text ? `<div class="msg-text">${m.text}</div>` : ''}
+                <div class="msg-info">
+                    <span>${time}</span>
+                    ${isMine ? '<span style="font-size:8px;">✓✓</span>' : ''}
+                </div>
+            `;
+            document.getElementById('messages').appendChild(div);
+            const cont = document.getElementById('messages');
+            cont.scrollTop = cont.scrollHeight;
+        }
+
+        function renderDateDivider(dateStr) {
+            const date = new Date(dateStr).toLocaleDateString();
+            if (lastRenderedDate !== date) {
+                lastRenderedDate = date;
+                const div = document.createElement('div');
+                div.className = 'date-divider';
+                div.innerText = date === new Date().toLocaleDateString() ? "Сегодня" : date;
+                document.getElementById('messages').appendChild(div);
+            }
+        }
+
+        async function loadHistory() {
+            const { data: msgs } = await _sup.from('messages')
+                .select('author_email, receiver_email, created_at')
+                .or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`)
+                .order('created_at', {ascending: false});
+
+            const list = document.getElementById('chat-list');
+            if (!msgs) return;
+
+            const hidden = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
+            const emails = [...new Set(msgs.map(m => m.author_email.toLowerCase() === myEmail ? m.receiver_email.toLowerCase() : m.author_email.toLowerCase()))]
+                            .filter(e => !hidden.includes(e));
+
+            list.innerHTML = "";
+            for (const email of emails) {
+                const profile = await getFullProfile(email);
+                const item = document.createElement('div');
+                item.className = `chat-item ${currentPeer === email ? 'active' : ''}`;
+                item.setAttribute('data-email', email);
+                
+                const avHtml = profile.avatar ? `<img src="${profile.avatar}">` : profile.name[0].toUpperCase();
+                
+                item.innerHTML = `
+                    <div class="avatar" onclick="event.stopPropagation(); openUserProfile('${email}')">${avHtml}</div>
+                    <div style="flex-grow:1">
+                        <div style="font-weight:600; font-size:14px;">${profile.name}</div>
+                        <div style="font-size:11px; opacity:0.5">${profile.username || ''}</div>
+                    </div>
+                `;
+                item.onclick = () => openChat(email);
+                item.oncontextmenu = (e) => { e.preventDefault(); openDeleteMenu(email); };
+                list.appendChild(item);
+            }
+        }
+
+        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+        function goBack() { document.body.classList.remove('chat-open'); currentPeer = null; updateChatListUI(); }
+        
         async function searchUser(query) {
             if (!query) return;
             const cleanQuery = query.replace('@', '').trim();
-            
-            // Ищем по username
-            const { data, error } = await _sup.from('user_profiles')
-                .select('email, display_name')
+            const { data } = await _sup.from('user_profiles')
+                .select('email')
                 .or(`username.eq.${cleanQuery},email.eq.${query.toLowerCase()}`)
                 .maybeSingle();
-
-            if (data) {
-                openChat(data.email);
-            } else {
-                // Если не нашли профиль, пробуем открыть как email напрямую
-                openChat(query);
-            }
+            if (data) openChat(data.email);
+            else openChat(query);
         }
 
-        // --- ОСТАЛЬНАЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ) ---
-
-        fileInput.onchange = () => {
-            const files = fileInput.files;
-            if (files.length === 0) return;
-            
-            previewContainer.innerHTML = "";
-            Array.from(files).forEach(file => {
-                const url = URL.createObjectURL(file);
-                const item = document.createElement('div');
-                item.className = "preview-item";
-
-                if (file.type.startsWith('image/')) {
-                    item.innerHTML = `<img src="${url}">`;
-                } else if (file.type.startsWith('video/')) {
-                    item.innerHTML = `<video src="${url}"></video>`;
-                } else {
-                    const ext = file.name.split('.').pop().toUpperCase();
-                    item.innerHTML = `<div class="file-icon-label">📄<br>${ext}<br>${file.name.substring(0,10)}...</div>`;
-                }
-                previewContainer.appendChild(item);
+        function updateChatListUI() {
+            document.querySelectorAll('.chat-item').forEach(el => {
+                el.classList.toggle('active', el.getAttribute('data-email') === currentPeer);
             });
-            photoModal.style.display = 'flex';
-        };
-
-        function cancelFile() {
-            fileInput.value = "";
-            modalCaption.value = "";
-            photoModal.style.display = 'none';
         }
-
-        function openFullView(url, isVideo) {
-            const viewer = document.getElementById('full-viewer');
-            const content = document.getElementById('viewer-content');
-            content.innerHTML = "";
-            
-            if (isVideo) {
-                content.innerHTML = `<video src="${url}" controls autoplay style="max-width:100%; max-height:95vh;"></video>`;
-            } else {
-                content.innerHTML = `<img src="${url}">`;
-            }
-            viewer.style.display = 'flex';
-            content.onclick = (e) => e.stopPropagation();
-        }
-
-        async function sendWithFile() {
-            const files = fileInput.files;
-            const text = modalCaption.value.trim();
-            if (files.length === 0 || !currentPeer) return;
-
-            const btn = document.getElementById('modal-send-btn');
-            btn.innerText = "ЗАГРУЗКА...";
-            btn.disabled = true;
-
-            try {
-                let uploadedUrls = [];
-                for (let file of files) {
-                    const fileExt = file.name.split('.').pop();
-                    const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
-                    
-                    const { data: uploadData, error: uploadError } = await _sup.storage
-                        .from('uploads')
-                        .upload(fileName, file);
-
-                    if (uploadError) throw uploadError;
-
-                    const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
-                    uploadedUrls.push(publicUrl);
-                }
-                
-                await _sup.from('messages').insert([{ 
-                    text: text || null, 
-                    author_email: myEmail, 
-                    receiver_email: currentPeer,
-                    is_read: false,
-                    file_url: uploadedUrls,
-                    sender_id: myId, // Используем UUID для надежности
-                    created_at: new Date().toISOString()
-                }]);
-                
-                cancelFile();
-            } catch (err) {
-                alert("Ошибка загрузки: " + err.message);
-            } finally {
-                btn.innerText = "ОТПРАВИТЬ";
-                btn.disabled = false;
-            }
-        }
-
-        document.getElementById('modal-send-btn').onclick = sendWithFile;
 
         async function handleAuth(type) {
             const email = document.getElementById('auth-email').value;
@@ -488,9 +623,15 @@
         }
 
         async function logout() { await _sup.auth.signOut(); location.reload(); }
+        function cancelFile() { fileInput.value = ""; modalCaption.value = ""; photoModal.style.display = 'none'; }
+        function openFullView(url, isVideo) {
+            const viewer = document.getElementById('full-viewer');
+            const content = document.getElementById('viewer-content');
+            content.innerHTML = isVideo ? `<video src="${url}" controls autoplay></video>` : `<img src="${url}">`;
+            viewer.style.display = 'flex';
+        }
 
         function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; chatToDelete = null; }
-
         async function openDeleteMenu(email) {
             chatToDelete = email;
             const profile = await getFullProfile(email);
@@ -514,168 +655,45 @@
             loadHistory();
         }
 
-        async function openChat(email) {
-            if (!email) return;
-            email = email.toLowerCase().trim();
-            currentPeer = email;
-            lastRenderedDate = null;
-            
-            document.body.classList.add('chat-open');
-            const profile = await getFullProfile(email);
-            document.getElementById('chat-title').innerText = profile.name;
-            
-            const headAv = document.getElementById('header-av');
-            if (profile.avatar) {
-                headAv.innerHTML = `<img src="${profile.avatar}">`;
-            } else {
-                headAv.innerText = profile.name[0];
-                headAv.innerHTML = profile.name[0];
-            }
-            
-            const msgContainer = document.getElementById('messages');
-            msgContainer.innerHTML = "";
-            
-            const { data } = await _sup.from('messages')
-                .select('*')
-                .or(`and(author_email.eq.${myEmail},receiver_email.eq.${currentPeer}),and(author_email.eq.${currentPeer},receiver_email.eq.${myEmail})`)
-                .order('created_at', { ascending: true });
-            
-            if (data) data.forEach(render);
-            updateChatListUI();
-        }
-
-        async function loadHistory() {
-            const { data: msgs } = await _sup.from('messages')
-                .select('author_email, receiver_email, created_at')
-                .or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`)
-                .order('created_at', {ascending: false});
-
-            const list = document.getElementById('chat-list');
-            if (!msgs) return;
-
-            const hidden = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
-            const emails = [...new Set(msgs.map(m => m.author_email.toLowerCase() === myEmail ? m.receiver_email.toLowerCase() : m.author_email.toLowerCase()))]
-                            .filter(e => !hidden.includes(e));
-
-            list.innerHTML = "";
-            for (const email of emails) {
-                const profile = await getFullProfile(email);
+        fileInput.onchange = () => {
+            const files = fileInput.files;
+            if (files.length === 0) return;
+            previewContainer.innerHTML = "";
+            Array.from(files).forEach(file => {
+                const url = URL.createObjectURL(file);
                 const item = document.createElement('div');
-                item.className = `chat-item ${currentPeer === email ? 'active' : ''}`;
-                item.setAttribute('data-email', email);
-                
-                const avHtml = profile.avatar ? `<img src="${profile.avatar}">` : profile.name[0];
-                
-                item.innerHTML = `<div class="avatar">${avHtml}</div><div style="flex-grow:1"><div style="font-weight:600; font-size:14px;">${profile.name}</div><div style="font-size:11px; opacity:0.5">${profile.username || ''}</div></div>`;
-                item.onclick = () => openChat(email);
-                item.oncontextmenu = (e) => { e.preventDefault(); openDeleteMenu(email); };
-                item.ontouchstart = () => pressTimer = setTimeout(() => openDeleteMenu(email), 600);
-                item.ontouchend = () => clearTimeout(pressTimer);
-                list.appendChild(item);
-            }
-        }
-
-        function updateChatListUI() {
-            document.querySelectorAll('.chat-item').forEach(el => {
-                el.classList.toggle('active', el.getAttribute('data-email') === currentPeer);
+                item.className = "preview-item";
+                if (file.type.startsWith('image/')) item.innerHTML = `<img src="${url}">`;
+                else if (file.type.startsWith('video/')) item.innerHTML = `<video src="${url}"></video>`;
+                else item.innerHTML = `<div class="file-icon-label">📄<br>${file.name.split('.').pop().toUpperCase()}</div>`;
+                previewContainer.appendChild(item);
             });
-        }
-
-        function renderDateDivider(dateStr) {
-            const date = new Date(dateStr).toLocaleDateString();
-            if (lastRenderedDate !== date) {
-                lastRenderedDate = date;
-                const div = document.createElement('div');
-                div.className = 'date-divider';
-                div.innerText = date === new Date().toLocaleDateString() ? "Сегодня" : date;
-                document.getElementById('messages').appendChild(div);
-            }
-        }
-
-        function render(m) {
-            renderDateDivider(m.created_at);
-            const isMine = m.author_email.toLowerCase() === myEmail;
-            const div = document.createElement('div');
-            div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
-            
-            let fHtml = "";
-            if (m.file_url) {
-                const urls = Array.isArray(m.file_url) ? m.file_url : [m.file_url];
-                if (urls.length > 0) {
-                    fHtml = `<div class="photo-grid grid-${Math.min(urls.length, 4)}">`;
-                    urls.forEach(url => {
-                        const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
-                        const isVid = cleanUrl.match(/\.(mp4|webm|ogg|mov)/i);
-                        const isImg = cleanUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)/i);
-
-                        if (isVid) {
-                            fHtml += `<video src="${cleanUrl}" onclick="event.stopPropagation(); openFullView('${cleanUrl}', true)" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
-                        } else if (isImg) {
-                            fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)" onerror="this.style.display='none'">`;
-                        } else {
-                            const fileName = cleanUrl.split('/').pop();
-                            fHtml += `<div onclick="window.open('${cleanUrl}', '_blank')" style="background:#23242A; padding:15px; border-radius:10px; cursor:pointer; text-align:center; font-size:11px; border:1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                                <span style="font-size:20px;">📁</span>
-                                <span style="opacity:0.6; margin-top:5px;">${fileName.substring(0,10)}...</span>
-                            </div>`;
-                        }
-                    });
-                    fHtml += `</div>`;
-                }
-            }
-
-            const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            const tick = isMine ? (m.is_read ? '✓✓' : '✓') : '';
-            const textContent = m.text ? `<div style="white-space: pre-wrap;">${m.text}</div>` : "";
-            
-            div.innerHTML = `
-                ${fHtml}
-                ${textContent}
-                <div class="msg-info">
-                    <span>${time}</span> 
-                    <span style="font-weight:bold; color:#58BFFF;">${tick}</span>
-                </div>`;
-                
-            const msgBox = document.getElementById('messages');
-            msgBox.appendChild(div);
-            msgBox.scrollTop = msgBox.scrollHeight;
-        }
-
-        async function getFullProfile(email) {
-            if (profileCache[email]) return profileCache[email];
-            const { data } = await _sup.from('user_profiles').select('display_name, avatar_url, username').eq('email', email).maybeSingle();
-            const profile = {
-                name: data?.display_name || email.split('@')[0],
-                avatar: data?.avatar_url || null,
-                username: data?.username ? `@${data.username}` : ''
-            };
-            profileCache[email] = profile;
-            return profile;
-        }
-
-        document.getElementById('msg-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const i = document.getElementById('input');
-            const text = i.value.trim();
-            if (text && currentPeer) {
-                i.value = ""; 
-                await _sup.from('messages').insert([{ 
-                    text: text, 
-                    author_email: myEmail, 
-                    receiver_email: currentPeer,
-                    sender_id: myId,
-                    is_read: false,
-                    created_at: new Date().toISOString()
-                }]);
-            }
+            photoModal.style.display = 'flex';
         };
 
-        function goBack() { 
-            document.body.classList.remove('chat-open'); 
-            currentPeer = null; 
-            updateChatListUI();
-        }
-        
+        document.getElementById('modal-send-btn').onclick = async () => {
+            const files = fileInput.files;
+            const text = modalCaption.value.trim();
+            if (files.length === 0 || !currentPeer) return;
+            const btn = document.getElementById('modal-send-btn');
+            btn.innerText = "ЗАГРУЗКА...";
+            btn.disabled = true;
+
+            try {
+                let uploadedUrls = [];
+                for (let file of files) {
+                    const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${file.name.split('.').pop()}`;
+                    const { error } = await _sup.storage.from('uploads').upload(fileName, file);
+                    if (error) throw error;
+                    const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
+                    uploadedUrls.push(publicUrl);
+                }
+                await _sup.from('messages').insert([{ text, author_email: myEmail, receiver_email: currentPeer, file_url: uploadedUrls, sender_id: myId }]);
+                cancelFile();
+            } catch (err) { alert(err.message); }
+            finally { btn.innerText = "ОТПРАВИТЬ"; btn.disabled = false; }
+        };
+
         init();
     </script>
 </body>
