@@ -126,6 +126,7 @@
 /* --- БАЗОВЫЙ СТИЛЬ ЧАТА (Normal) --- */
 /* --- ОСНОВНОЙ СТИЛЬ КАРТОЧКИ ЧАТА (Состояние Normal) --- */
 /* --- ПОЛНЫЙ СТИЛЬ ЭЛЕМЕНТА СПИСКА ЧАТОВ (.chat-item) --- */
+/* --- ПОЛНЫЙ СТИЛЬ ЭЛЕМЕНТА СПИСКА ЧАТОВ (.chat-item) --- */
 .chat-item {
     display: flex;
     align-items: center;
@@ -137,34 +138,34 @@
     position: relative;
     box-sizing: border-box;
 
-    /* Скорость анимации 0.2s для всех состояний */
+    /* Плавность всех переходов (0.2 секунды) */
     transition: 
         border-radius 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
         border 0.2s ease, 
         background-position 0.2s ease-out,
         box-shadow 0.2s ease;
 
-    /* ГЕОМЕТРИЯ (Corner radius 110 из макета) */
+    /* Исходная геометрия (Corner radius: 110) */
     border-radius: 110px;
     border: 0.8px solid rgba(255, 255, 255, 0.1); /* Тонкая грань стекла */
     
-    /* ЭФФЕКТ СТЕКЛА (Заполнение 60% + Мягкое свечение) */
+    /* ЭФФЕКТ СТЕКЛА (Заполнение 60% + Слоистые блики) */
     background-color: rgba(30, 31, 34, 0.6);
     background-image: 
-        /* Твой градиент для Hover (выезд слева) */
+        /* 1. Лайнер для Hover (выезжает слева направо) */
         linear-gradient(90deg, 
-            rgba(144, 217, 249, 0.2) 0%,   /* Голубой стоп */
-            rgba(255, 255, 255, 0.2) 40%,  /* Белый блик */
-            rgba(173, 173, 173, 0.0) 100%  /* Прозрачный край */
+            rgba(144, 217, 249, 0.2) 0%,   
+            rgba(255, 255, 255, 0.2) 40%,  
+            rgba(173, 173, 173, 0.0) 100%
         ),
-        /* Имитация центрального свечения (Blur 68, 5%) */
+        /* 2. Радиальное свечение из центра (как в Figma) */
         radial-gradient(
             circle at center, 
             rgba(255, 255, 255, 0.05) 0%, 
             rgba(255, 255, 255, 0) 75%
         );
     
-    /* Настройка размеров градиентов: 200% для анимации лайнера, 100% для центра */
+    /* Размеры: лайнер 200% (для анимации), свечение 100% */
     background-size: 200% 100%, 100% 100%;
     background-position: 100% 0%, 0% 0%; 
     background-repeat: no-repeat;
@@ -173,29 +174,29 @@
     box-shadow: inset 0 4px 4px rgba(255, 255, 255, 0.2);
 
     /* ГЛУБОКИЙ БЛЮР (Background blur: 48) */
-    backdrop-filter: blur(5px) saturate(160%);
-    -webkit-backdrop-filter: blur(5px) saturate(160%);
+    backdrop-filter: blur(48px) saturate(160%);
+    -webkit-backdrop-filter: blur(48px) saturate(160%);
     
     overflow: hidden;
 }
 
 /* --- СОСТОЯНИЕ ПРИ НАВЕДЕНИИ (Hover) --- */
 .chat-item:hover:not(.active) {
-    /* Лайнер выезжает СЛЕВА (смещение на 0%) */
+    /* Сдвигаем градиент-лайнер, чтобы он "выехал" */
     background-position: 0% 0%, 0% 0%; 
     border-radius: 100px;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    /* Чуть усиливаем верхний блик при наведении */
+    /* Усиливаем верхний блик */
     box-shadow: inset 0 4px 6px rgba(255, 255, 255, 0.3);
 }
 
 /* --- ВЫБРАННЫЙ ЧАТ (Active) --- */
 .chat-item.active {
-    /* Твое рабочее скругление 20px */
+    /* Скругление 20px для активного чата */
     border-radius: 20px !important; 
     border: 1.5px solid rgba(255, 255, 255, 0.4) !important;
     
-    /* Фиолетовый градиент из Figma */
+    /* Фиолетовый градиент-лайнер */
     background: linear-gradient(90deg, 
         rgba(166, 185, 233, 0.3) 0%, 
         rgba(202, 150, 215, 0.3) 69%, 
@@ -203,14 +204,13 @@
     ) !important;
     background-size: 100% 100% !important;
 
-    /* Внешнее свечение для выделенного чата */
+    /* Эффект свечения */
     box-shadow: 
         inset 0 4px 4px rgba(255, 255, 255, 0.2),
         0 0 20px rgba(166, 185, 233, 0.15);
-    color: #ffffff;
 }
 
-/* --- АВАТАРКИ ВНУТРИ СПИСКА --- */
+/* --- АВАТАРКИ (Белый фон) --- */
 .chat-item .avatar {
     width: 45px;
     height: 45px;
@@ -218,9 +218,11 @@
     flex-shrink: 0;
     overflow: hidden;
     position: relative;
-    background-color: rgba(255, 255, 255, 0.05); 
-    border: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 2;
+
+    /* Чистый белый фон с легкой прозрачностью (80%) */
+    background-color: rgba(255, 255, 255, 0.8); 
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .chat-item .avatar img {
@@ -230,7 +232,19 @@
     display: block;
 }
 
-/* --- СЕРАЯ ПОЛОСКА-РАЗДЕЛИТЕЛЬ (0.9px) --- */
+/* Иконка-заглушка на белом фоне */
+.chat-item .avatar:empty::before {
+    content: "👤";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    color: #333;
+    opacity: 0.5;
+}
+
+/* --- РАЗДЕЛИТЕЛЬНАЯ ЛИНИЯ --- */
 .chat-item::after {
     content: "";
     position: absolute;
@@ -241,7 +255,7 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* Текст ника */
+/* Текст имени */
 .chat-item span {
     font-size: 14px;
     font-weight: 500;
@@ -252,6 +266,7 @@
 
 .chat-item.active span {
     font-weight: 600;
+    color: #fff;
 }
 
         /* ОКНО ЧАТА */
