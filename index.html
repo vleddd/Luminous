@@ -137,52 +137,57 @@
     gap: 12px;
     padding: 0 20px;
     
-    /* 1. УБИРАЕМ ПРЯМОУГОЛЬНИК (Делаем шапку плавающей) */
-    position: absolute; 
+    /* ПОЗИЦИОНИРОВАНИЕ */
+    position: absolute;
     top: 15px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 100;
+    z-index: 9999; /* Максимальный приоритет */
 
-    /* 2. АДАПТИВНОСТЬ (Оптимизация для телефонов) */
+    /* РАЗМЕРЫ И ОПТИМИЗАЦИЯ */
     width: 90%;
     max-width: 600px;
     height: 60px;
-
-    /* 3. ДИЗАЙН (Градиент 60% прозрачности) */
-    border-radius: 200px;
-    background: linear-gradient(90deg, 
-        rgba(62, 63, 65, 60) 0%,   /* Твои 60% прозрачности здесь (0.6) */
-        rgba(34, 36, 40, 60) 56%
-    );
-
-    /* Обводка и размытие */
-    border: 0.5px solid #000000;
-    box-sizing: border-box; 
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    
     flex-shrink: 0;
+
+    /* СКРУГЛЕНИЕ */
+    border-radius: 200px;
+
+    /* ГРАДИЕНТ С ПРОЗРАЧНОСТЬЮ 60% */
+    /* Важно: используем rgba, чтобы фон чата просвечивал */
+    background: linear-gradient(90deg, 
+        rgba(62, 63, 65, 0.6) 0%, 
+        rgba(34, 36, 40, 0.6) 56%
+    ) !important;
+
+    /* ОБВОДКА */
+    border: 0.8px solid rgba(0, 0, 0, 0.5); /* Черная, чуть прозрачная */
+    box-sizing: border-box; 
+
+    /* ЭФФЕКТ СТЕКЛА (BLUR) */
+    /* Если это не работает, проверь, нет ли фона у родителя #main-chat */
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    
+    overflow: hidden;
 }
 
-/* 4. КОРРЕКЦИЯ ТЕКСТА (Твой никнейм выше центра) */
+/* ТЕКСТ (НИКНЕЙМ) */
 #chat-header span, 
 #chat-header div:not(.avatar) {
     position: relative;
-    top: -8px; 
-    font-weight: 500;
+    top: -8px; /* Твоя настройка высоты */
+    font-weight: 600;
+    color: #ffffff;
     line-height: 1;
-    color: #ffffff; /* Чтобы ник был всегда ярким */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Чтобы ник лучше читался */
 }
 
+/* АВАТАРКА */
 #chat-header .avatar {
     position: relative;
-    top: 0; /* Аватарка остается на месте */
-}
-
-/* 5. ЧТОБЫ СООБЩЕНИЯ НЕ ПРЯТАЛИСЬ ЗА ШАПКОЙ ВНАЧАЛЕ */
-#messages {
-    padding-top: 85px !important; 
+    top: 0;
+    flex-shrink: 0;
 }
 
 /* Текст (как ты настроил) */
