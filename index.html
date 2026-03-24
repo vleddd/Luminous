@@ -92,7 +92,7 @@
         .profile-input { background: transparent; border: none; color: #fff; width: 100%; font-size: 16px; outline: none; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 5px; margin-bottom: 15px; }
         .profile-input:focus { border-bottom-color: #7058c9; }
 
-        /* ОКНО ПРОСМОТРА ЧУЖОГО ПРОФИЛЯ */
+        /* ОКНО ПРОСМОТРА ЧУЖОГО ПРОФИЛЯ (КАК НА СКРИНШОТЕ) */
         #view-user-modal {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
             z-index: 45000; justify-content: center; align-items: center; backdrop-filter: blur(5px);
@@ -318,7 +318,7 @@
     <script>
         const _sup = supabase.createClient('https://rlbrnsjluipocxommmvx.supabase.co', 'sb_publishable_p_5nubdUTK9RUqIcosNRlQ_M2wM9VeG');
 
-        let myEmail = "", myId = "", currentPeer = null, profileCache = {}, lastRenderedDate = null, chatToDelete = null;
+        let myEmail = "", myId = "", currentPeer = null, profileCache = {}, lastRenderedDate = null, chatToDelete = null, pressTimer = null;
 
         const fileInput = document.getElementById('file-input');
         const photoModal = document.getElementById('photo-modal');
@@ -400,9 +400,10 @@
             }
         }
 
+        // --- ПРОСМОТР ЧУЖИХ ПРОФИЛЕЙ ---
         async function openUserProfile(email) {
             if (!email) return;
-            const { data: p } = await _sup.from('user_profiles').select('*').eq('email', email).maybeSingle();
+            const { data: p, error } = await _sup.from('user_profiles').select('*').eq('email', email).maybeSingle();
             
             if (p) {
                 document.getElementById('v-name').innerText = (p.display_name || 'User') + (p.last_name ? ' ' + p.last_name : '');
@@ -443,10 +444,11 @@
             const ext = file.name.split('.').pop();
             const path = `avatars/${myId}_${Date.now()}.${ext}`;
 
-            const { error } = await _sup.storage.from('uploads').upload(path, file, { upsert: true });
+            const { data, error } = await _sup.storage.from('uploads').upload(path, file, { upsert: true });
             if (error) return alert(error.message);
 
             const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(path);
+            
             await _sup.from('user_profiles').update({ avatar_url: publicUrl }).eq('id', myId);
             document.getElementById('profile-av-img').src = publicUrl;
             document.getElementById('profile-av-img').style.display = "block";
@@ -493,13 +495,14 @@
             const msgText = val;
             input.value = "";
 
-            await _sup.from('messages').insert([{
+            const { error } = await _sup.from('messages').insert([{
                 text: msgText,
                 author_email: myEmail,
                 receiver_email: currentPeer,
                 sender_id: myId,
                 created_at: new Date().toISOString()
             }]);
+            if (error) console.error(error);
         }
 
         function render(m) {
@@ -583,6 +586,7 @@
             }
         }
 
+        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
         function goBack() { document.body.classList.remove('chat-open'); currentPeer = null; updateChatListUI(); }
         
         async function searchUser(query) {
@@ -620,7 +624,6 @@
 
         async function logout() { await _sup.auth.signOut(); location.reload(); }
         function cancelFile() { fileInput.value = ""; modalCaption.value = ""; photoModal.style.display = 'none'; }
-        
         function openFullView(url, isVideo) {
             const viewer = document.getElementById('full-viewer');
             const content = document.getElementById('viewer-content');
@@ -629,7 +632,6 @@
         }
 
         function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; chatToDelete = null; }
-        
         async function openDeleteMenu(email) {
             chatToDelete = email;
             const profile = await getFullProfile(email);
