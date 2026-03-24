@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v0.7 - Media Update</title>
+    <title>Luminous v0.7 - Account System</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #25272D; color: #fff; height: 100dvh; display: flex; overflow: hidden; }
@@ -50,7 +50,6 @@
         }
         .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
         
-        /* Исправленная сетка в модалке */
         .modal-body { 
             padding: 15px; 
             background: #1a1b1e; 
@@ -61,15 +60,9 @@
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); 
         }
         .preview-item {
-            position: relative;
-            aspect-ratio: 1 / 1;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #23242A;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(255,255,255,0.1);
+            position: relative; aspect-ratio: 1 / 1; border-radius: 12px;
+            overflow: hidden; background: #23242A; display: flex;
+            align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);
         }
         .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
         .file-icon-label { font-size: 11px; text-align: center; word-break: break-all; padding: 5px; color: #BAC1F3; }
@@ -181,7 +174,7 @@
     <div id="sidebar">
         <div class="sidebar-header">
             <div class="menu-btn" style="cursor:pointer; opacity:0.6;">☰</div>
-            <input id="search-input" placeholder="Search" onkeyup="if(event.key==='Enter') openChat(this.value)">
+            <input id="search-input" placeholder="Email пользователя..." onkeyup="if(event.key==='Enter') openChat(this.value)">
             <div style="color: #BAC1F3; font-weight: bold; font-size: 14px; margin-left: auto;">Luminous</div>
         </div>
         <div id="chat-list"></div>
@@ -244,7 +237,7 @@
             }
         }
 
-        // ПРЕДПРОСМОТР ФАЙЛОВ СЕТКОЙ
+        // ПРЕДПРОСМОТР ФАЙЛОВ
         fileInput.onchange = () => {
             const files = fileInput.files;
             if (files.length === 0) return;
@@ -302,13 +295,8 @@
                 for (let file of files) {
                     const fileExt = file.name.split('.').pop();
                     const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
-                    
-                    const { data: uploadData, error: uploadError } = await _sup.storage
-                        .from('uploads')
-                        .upload(fileName, file);
-
+                    const { data: uploadData, error: uploadError } = await _sup.storage.from('uploads').upload(fileName, file);
                     if (uploadError) throw uploadError;
-
                     const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
                     uploadedUrls.push(publicUrl);
                 }
@@ -337,6 +325,7 @@
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-pass').value;
             const errorEl = document.getElementById('auth-error');
+            
             let res = type === 'register' 
                 ? await _sup.auth.signUp({ email, password }) 
                 : await _sup.auth.signInWithPassword({ email, password });
@@ -345,6 +334,14 @@
                 errorEl.innerText = res.error.message;
                 errorEl.style.display = 'block';
             } else {
+                // Прямое создание профиля для надежности при регистрации
+                if (type === 'register' && res.data.user) {
+                    await _sup.from('user_profiles').upsert([{
+                        id: res.data.user.id,
+                        email: email.toLowerCase().trim(),
+                        display_name: email.split('@')[0]
+                    }]);
+                }
                 location.reload();
             }
         }
@@ -376,14 +373,28 @@
             loadHistory();
         }
 
+        // НОВАЯ ЛОГИКА: Поиск аккаунта перед открытием
         async function openChat(email) {
             if (!email) return;
             email = email.toLowerCase().trim();
+
+            // Проверка: есть ли такой юзер в системе
+            const { data: profile } = await _sup
+                .from('user_profiles')
+                .select('display_name')
+                .eq('email', email)
+                .maybeSingle();
+
+            if (!profile) {
+                alert("Пользователь не найден. Попросите его зарегистрироваться в Luminous!");
+                return;
+            }
+
             currentPeer = email;
             lastRenderedDate = null;
             
             document.body.classList.add('chat-open');
-            const name = await getProfileName(email);
+            const name = profile.display_name || email.split('@')[0];
             document.getElementById('chat-title').innerText = name;
             document.getElementById('header-av').innerText = name[0];
             
@@ -465,7 +476,6 @@
                         } else if (isImg) {
                             fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)" onerror="this.style.display='none'">`;
                         } else {
-                            // Кнопка для скачивания прочих файлов
                             const fileName = cleanUrl.split('/').pop();
                             fHtml += `<div onclick="window.open('${cleanUrl}', '_blank')" style="background:#23242A; padding:15px; border-radius:10px; cursor:pointer; text-align:center; font-size:11px; border:1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center;">
                                 <span style="font-size:20px;">📁</span>
