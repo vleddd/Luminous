@@ -129,59 +129,71 @@
 /* --- ПОЛНЫЙ СТИЛЬ ЭЛЕМЕНТА СПИСКА ЧАТОВ (.chat-item) --- */
 /* --- ПОЛНЫЙ СТИЛЬ ЭЛЕМЕНТА СПИСКА ЧАТОВ (.chat-item) --- */
 /* --- МИНИМАЛИСТИЧНЫЙ СТИЛЬ СПИСКА ЧАТОВ (.chat-item) --- */
+/* --- МИНИМАЛИСТИЧНЫЙ СПИСОК ЧАТОВ (.chat-item) --- */
 .chat-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 15px;
+    padding: 12px 15px;
 
-    /* Расстояние между чатами (можно менять) */
-    margin-bottom: 2px; 
+    /* РАССТОЯНИЕ МЕЖДУ ПОЛОСКАМИ (увеличено) */
+    margin-bottom: 10px; 
 
     cursor: pointer;
     user-select: none;
     position: relative;
     box-sizing: border-box;
 
-    /* Плавность анимаций 0.1s */
+    /* АНИМАЦИИ (убрано border-radius из transition для мгновенной формы) */
     transition: 
-        border-radius 0.1s cubic-bezier(0.4, 0, 0.2, 1), 
         border 0.1s ease, 
+        background-position 0.1s ease-out,
         background-color 0.1s ease;
 
-    /* Убираем рамки и скругления в обычном состоянии */
-    border-radius: 0;
-    border: none;
+    /* ФОРМА (статичная, без анимации перехода) */
+    border-radius: 20px; 
     
-    /* ФОН ПОЛНОСТЬЮ ПРОЗРАЧНЫЙ */
+    /* УЛЬТРА-ТОНКАЯ ОБВОДКА */
+    border: 0.3px solid rgba(255, 255, 255, 0.08);
+    
+    /* ПРОЗРАЧНЫЙ ФОН И БЛЮР 5 */
     background-color: transparent;
-    background-image: none;
-
-    /* Убираем все тени и блики */
-    box-shadow: none;
-
-    /* БЛЮР 5 (как ты просил) */
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
+
+    /* ГРАДИЕНТ ДЛЯ ХОВЕРА (подготовлен к выезду) */
+    background-image: linear-gradient(90deg, 
+        rgba(144, 217, 249, 0.15) 0%,   
+        rgba(255, 255, 255, 0.1) 40%,  
+        rgba(173, 173, 173, 0.0) 100%
+    );
+    background-size: 200% 100%;
+    background-position: 100% 0%;
+    background-repeat: no-repeat;
     
-    overflow: visible;
+    overflow: hidden;
 }
 
 /* --- СОСТОЯНИЕ ПРИ НАВЕДЕНИИ (Hover) --- */
 .chat-item:hover:not(.active) {
-    /* При наведении проявляем легкий фон */
-    background-color: rgba(255, 255, 255, 0.05);
-    border-radius: 15px;
+    /* Возвращаем выезд цвета */
+    background-position: 0% 0%; 
+    border: 0.3px solid rgba(255, 255, 255, 0.2);
 }
 
 /* --- ВЫБРАННЫЙ ЧАТ (Active) --- */
 .chat-item.active {
+    /* Без анимации скругления — сразу нужная форма */
     border-radius: 20px !important; 
-    /* Фиолетовый акцент, но более легкий */
+    border: 0.3px solid rgba(255, 255, 255, 0.4) !important;
+    
+    /* Твой фиолетовый градиент */
     background: linear-gradient(90deg, 
-        rgba(166, 185, 233, 0.15) 0%, 
-        rgba(202, 150, 215, 0.15) 100%
+        rgba(166, 185, 233, 0.2) 0%, 
+        rgba(202, 150, 215, 0.2) 69%, 
+        rgba(166, 150, 215, 0.2) 100% 
     ) !important;
+    background-size: 100% 100% !important;
 }
 
 /* --- АВАТАРКИ --- */
@@ -193,7 +205,7 @@
     overflow: hidden;
     position: relative;
     z-index: 2;
-    background-color: #ffffff; /* Твой белый фон */
+    background-color: #ffffff; /* Чистый белый фон */
 }
 
 .chat-item .avatar img {
@@ -212,18 +224,18 @@
     z-index: 2;
 }
 
-/* --- ТЕ САМЫЕ ТОНКИЕ ПОЛОСКИ (Разделители) --- */
+/* --- ТОНКИЕ ПОЛОСКИ-РАЗДЕЛИТЕЛИ --- */
 .chat-item::after {
     content: "";
     position: absolute;
-    bottom: -1px; /* Прижимаем к самому низу */
+    /* Смещаем ниже, чтобы увеличить визуальный зазор */
+    bottom: -6px; 
     left: 15px;
     right: 15px;
-    height: 0.5px; /* Ультра-тонкая линия */
-    background: rgba(255, 255, 255, 0.1); /* Белая, но прозрачная на 90% */
+    height: 0.5px;
+    background: rgba(255, 255, 255, 0.08); 
 }
 
-/* Убираем полоску у последнего элемента, чтобы не висела внизу */
 .chat-item:last-child::after {
     display: none;
 }
