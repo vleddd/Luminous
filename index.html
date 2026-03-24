@@ -127,7 +127,30 @@
             display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s;
             user-select: none;
         }
-        .chat-item.active { background: #34373F !important; border: 1px solid #565C69; }
+        .chat-item.active {
+    /* ЦВЕТА И ГРАДИЕНТ (как в твоем дизайне) */
+    background: linear-gradient(90deg, 
+        rgba(62, 63, 65, 0.6) 0%, 
+        rgba(34, 36, 40, 0.6) 56%
+    ) !important;
+
+    /* СКРУГЛЕНИЕ (из твоего скриншота Figma) */
+    border-radius: 80px !important;
+
+    /* ОБВОДКА (Stroke: FFFFFF, 60% opacity, Inside 3px) */
+    border: 3px solid rgba(255, 255, 255, 0.6) !important;
+    box-sizing: border-box;
+
+    /* ЭФФЕКТЫ (Background blur: 20) */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    /* Плавность перехода */
+    transition: background 0.3s, border 0.3s;
+    
+    /* Убедимся, что контент внутри не вылетает за скругление */
+    overflow: hidden;
+}
 
         /* ОКНО ЧАТА */
         #main-chat { flex-grow: 1; display: flex; flex-direction: column; background: #2E3037; position: relative; }
