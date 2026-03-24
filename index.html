@@ -137,29 +137,42 @@
     gap: 12px;
     padding: 0 20px;
     
-    /* ОПТИМИЗАЦИЯ ДЛЯ ВСЕХ ЭКРАНОВ */
-    width: 90%;           /* На мобилках займет 90% ширины */
-    max-width: 600px;     /* На компах не растянется шире 600px */
-    height: 60px;
-    margin: 10px auto;    /* Центрирует блок и дает отступ сверху */
+    /* ПЛАВАЮЩАЯ ПОЗИЦИЯ */
+    position: absolute;  /* Вырываем блок из потока */
+    top: 10px;           /* Отступ от верха */
+    left: 50%;           /* Ставим начало блока по центру */
+    transform: translateX(-50%); /* Сдвигаем назад на половину его ширины для идеального центра */
+    z-index: 1000;       /* Чтобы шапка всегда была поверх сообщений */
 
-    /* Твой стиль */
+    /* Адаптивная ширина */
+    width: 90%;
+    max-width: 600px;
+    height: 60px;
+
+    /* Визуал из макета */
     border-radius: 200px;
     background: linear-gradient(90deg, 
         rgba(62, 63, 65, 0.6) 0%, 
         rgba(34, 36, 40, 0.6) 56%
     );
-
-    /* Обводка (сделал чуть заметнее, 0.1px часто не прорисовывается) */
     border: 0.5px solid #000000;
     box-sizing: border-box; 
-
-    /* Эффект размытия */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    
-    overflow: hidden;
-    flex-shrink: 0; /* Не дает блоку сплющиться */
+}
+
+/* Фикс для сообщений: чтобы они не начинались ПРЯМО под шапкой и их было видно */
+#messages {
+    padding-top: 80px !important; /* Даем место, чтобы сообщения не перекрывались шапкой в самом начале */
+}
+
+/* Текст (как ты настроил) */
+#chat-header span, 
+#chat-header div:not(.avatar) {
+    position: relative;
+    top: -8px; 
+    font-weight: 500;
+    line-height: 1;
 }
 
 /* Текст (поднят выше) */
