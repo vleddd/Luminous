@@ -124,57 +124,57 @@
 
         /* ОБЫЧНЫЙ (НЕАКТИВНЫЙ) ЧАТ */
 /* --- БАЗОВЫЙ СТИЛЬ ЧАТА (Normal) --- */
+/* --- ОСНОВНОЙ СТИЛЬ КАРТОЧКИ ЧАТА (Состояние Normal) --- */
 .chat-item {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 10px 15px;
-    margin-bottom: 12px; /* Отступ для полоски */
+    margin-bottom: 12px;
     cursor: pointer;
     user-select: none;
     position: relative;
     box-sizing: border-box;
 
-    /* СУПЕР-БЫСТРАЯ АНИМАЦИЯ (0.2s) */
+    /* Скорость анимации 0.2s — очень отзывчиво */
     transition: 
         border-radius 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
         border 0.2s ease, 
-        background-position 0.2s ease-out,
-        transform 0.1s ease;
+        background-position 0.2s ease-out;
 
-    /* СОСТОЯНИЕ ИЗ FIGMA (Normal: #ADADAD -> #878787, 20% Fill) */
-    border-radius: 110px; 
+    /* Параметры из Figma (Скругление 110px) */
+    border-radius: 110px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     
-    /* ГРАДИЕНТ: Справа — серый (Normal), Слева — голубой (Hover) */
+    /* Градиент подготовлен для выезда слева (200% ширина) */
     background: linear-gradient(90deg, 
-        rgba(144, 217, 249, 0.2) 0%,   /* Голубой стоп */
-        rgba(255, 255, 255, 0.2) 40%,  /* Белый стоп */
-        rgba(173, 173, 173, 0.2) 100%  /* Серый стоп (Normal) */
+        rgba(144, 217, 249, 0.2) 0%,   /* Голубой (Hover) */
+        rgba(255, 255, 255, 0.2) 40%,  /* Белый блик */
+        rgba(173, 173, 173, 0.2) 100%  /* Серый (Normal) */
     );
     background-size: 200% 100%;
-    background-position: 100% 0%; /* По умолчанию показываем правую (серую) часть */
+    background-position: 100% 0%; /* По умолчанию скрываем лайнер справа */
 
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
 
-/* --- ЭФФЕКТ ПРИ НАВЕДЕНИИ (Hover) --- */
+/* --- СОСТОЯНИЕ ПРИ НАВЕДЕНИИ (Hover) --- */
 .chat-item:hover:not(.active) {
-    /* Лайнер выезжает СЛЕВА (смещаем позицию в 0%) */
+    /* Лайнер выезжает СЛЕВА */
     background-position: 0% 0%; 
     border-radius: 100px;
     border: 2px solid rgba(255, 255, 255, 0.4);
-    transform: translateX(4px); /* Легкий сдвиг вправо для интерактивности */
+    /* transform удален, блок стоит на месте */
 }
 
 /* --- ВЫБРАННЫЙ ЧАТ (Active) --- */
 .chat-item.active {
-    /* Скругление 20px (как ты просил) */
+    /* Твое рабочее скругление 20px */
     border-radius: 20px !important; 
     border: 3px solid rgba(255, 255, 255, 0.6) !important;
     
-    /* Фиолетовый градиент из Figma */
+    /* Фиолетовый лайнер из Figma (20% Fill) */
     background: linear-gradient(90deg, 
         rgba(166, 185, 233, 0.2) 0%, 
         rgba(202, 150, 215, 0.2) 69%, 
@@ -184,38 +184,44 @@
 
     backdrop-filter: blur(20px);
     color: #ffffff;
-    transform: translateX(0);
 }
 
-/* --- СЕРАЯ ПОЛОСКА-РАЗДЕЛИТЕЛЬ (0.9px) --- */
-.chat-item::after {
-    content: "";
-    position: absolute;
-    bottom: -6.45px; /* Дистанция от блока */
-    left: 25px;
-    right: 25px;
-    height: 0.9px;
-    background: rgba(255, 255, 255, 0.1);
-    /* Полоска теперь статична и не исчезает */
-}
-
-/* Стилизация аватара и текста для сочности */
+/* --- АВАТАРКИ (Исправлено, без черного фона) --- */
 .chat-item .avatar {
     width: 45px;
     height: 45px;
     border-radius: 50%;
     flex-shrink: 0;
-    background: #333;
+    overflow: hidden;
+    background: transparent; /* Никакой лишней заливки */
 }
 
+.chat-item .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Фото не растягивается */
+    display: block;
+}
+
+/* --- ПОСТОЯННАЯ ПОЛОСКА-РАЗДЕЛИТЕЛЬ (0.9px) --- */
+.chat-item::after {
+    content: "";
+    position: absolute;
+    bottom: -6.45px;
+    left: 25px;
+    right: 25px;
+    height: 0.9px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Текст ника */
 .chat-item span {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
-    transition: 0.2s;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .chat-item.active span {
-    color: #fff;
     font-weight: 600;
 }
 
