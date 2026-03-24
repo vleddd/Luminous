@@ -3,28 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v0.7.2 - Profile Sync</title>
+    <title>Luminous v0.7.2 - Unified</title>
     <style>
-        /* Весь твой оригинальный дизайн без изменений */
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #25272D; color: #fff; height: 100dvh; display: flex; overflow: hidden; }
 
-        #auth-overlay { position: fixed; inset: 0; background: #1E1F23; z-index: 10000; display: none; align-items: center; justify-content: center; }
-        .auth-card { background: #2E3037; padding: 35px; border-radius: 24px; width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
-        .auth-input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 12px; border: none; background: #23242A; color: #fff; outline: none; font-size: 16px; }
-        .auth-btn { width: 100%; padding: 12px; background: #7058c9; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        /* ОКНО РЕГИСТРАЦИИ */
+        #auth-overlay { 
+            position: fixed; inset: 0; background: #1E1F23; z-index: 10000; 
+            display: none; align-items: center; justify-content: center; 
+        }
+        .auth-card { 
+            background: #2E3037; padding: 35px; border-radius: 24px; width: 340px; 
+            border: 1px solid rgba(255,255,255,0.1); text-align: center; 
+        }
+        .auth-input { 
+            width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 12px; 
+            border: none; background: #23242A; color: #fff; outline: none; font-size: 16px; 
+        }
+        .auth-btn { 
+            width: 100%; padding: 12px; background: #7058c9; color: white; border: none; 
+            border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; 
+        }
         .auth-secondary { background: transparent; color: #6EBDFD; border: 1px solid #6EBDFD; }
 
-        #delete-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .delete-card { background: #2E3037; padding: 25px; border-radius: 24px; width: 100%; max-width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        /* МОДАЛКИ */
+        #delete-modal, #photo-modal, #full-viewer { position: fixed; inset: 0; z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        #delete-modal { background: rgba(0,0,0,0.7); }
+        #photo-modal { background: rgba(0, 0, 0, 0.9); flex-direction: column; }
+        #full-viewer { background: rgba(0,0,0,0.95); z-index: 50000; }
+
+        .delete-card, .modal-content { background: #2E3037; padding: 25px; border-radius: 24px; width: 100%; max-width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .modal-content { max-width: 450px; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+        
         .del-btn-red { width: 100%; padding: 12px; background: #ff4d4d; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .del-btn-gray { width: 100%; padding: 12px; background: #3D3F46; color: white; border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px; }
 
-        #photo-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 30000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: #2E3037; border-radius: 24px; width: 100%; max-width: 450px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1); }
         .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .modal-body { padding: 15px; background: #1a1b1e; max-height: 60vh; overflow-y: auto; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
-        .preview-item { position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; background: #23242A; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); }
+        .modal-body { 
+            padding: 15px; background: #1a1b1e; max-height: 60vh; overflow-y: auto; 
+            display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); 
+        }
+        .preview-item { position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; background: #23242A; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;}
         .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
         .file-icon-label { font-size: 11px; text-align: center; word-break: break-all; padding: 5px; color: #BAC1F3; }
 
@@ -32,29 +52,27 @@
         #modal-caption { background: #23242A; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; padding: 10px 15px; border-radius: 12px; }
         .modal-send-btn { background: #7058c9; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
 
-        #full-viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 50000; display: none; align-items: center; justify-content: center; padding: 10px; }
-        #viewer-content { max-width: 100%; max-height: 100%; position: relative; }
-        #viewer-content img, #viewer-content video { max-width: 100%; max-height: 95vh; border-radius: 8px; }
-
+        /* САЙДБАР */
         #sidebar { width: 300px; background: #25272D; border-right: 1px solid rgba(0,0,0,0.2); display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 10px; background: #252935; display: flex; align-items: center; gap: 10px; border-radius: 10px; margin: 5px; }
         #search-input { background: #33353B; border: none; border-radius: 40px; color: #fff; outline: none; padding: 8px 15px; flex-grow: 1; font-size: 14px; }
         #chat-list { overflow-y: auto; flex-grow: 1; padding: 10px; }
 
-        .chat-item { background: transparent; border-radius: 15px; margin-bottom: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; user-select: none; }
+        .chat-item { border-radius: 15px; margin-bottom: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; user-select: none; }
         .chat-item.active { background: #34373F !important; border: 1px solid #565C69; }
 
+        /* ОКНО ЧАТА */
         #main-chat { flex-grow: 1; display: flex; flex-direction: column; background: #2E3037; position: relative; }
         #chat-header { padding: 10px 20px; background: #25272D; display: flex; align-items: center; gap: 12px; height: 60px; margin: 5px; border-radius: 10px; }
         #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
         .date-divider { align-self: center; background: rgba(0,0,0,0.2); color: #BAC1F3; padding: 5px 15px; border-radius: 20px; font-size: 12px; margin: 15px 0; font-weight: 500; opacity: 0.8; }
-
         .msg { width: fit-content; min-width: 80px; max-width: 85%; padding: 10px 14px; font-size: 15px; word-wrap: break-word; display: flex; flex-direction: column; }
         .msg-info { font-size: 10px; opacity: 0.5; margin-top: 4px; align-self: flex-end; display: flex; gap: 4px; }
         .msg-theirs { align-self: flex-start; background: #191a1d; border-radius: 18px 18px 18px 4px; }
         .msg-mine { align-self: flex-end; background: #7058c9; border-radius: 18px 18px 4px 18px; }
 
+        /* СЕТКА МЕДИА */
         .photo-grid { display: grid; gap: 4px; margin-bottom: 6px; border-radius: 12px; overflow: hidden; width: 100%; max-width: 320px; }
         .photo-grid img, .photo-grid video { width: 100%; height: 160px; object-fit: cover; cursor: pointer; display: block; background: rgba(0,0,0,0.1); }
         .grid-1 img, .grid-1 video { height: auto; max-height: 300px; object-fit: contain; }
@@ -66,14 +84,12 @@
         .input-area { padding: 10px 20px; display: flex; align-items: center; gap: 12px; background: #2E3037; }
         .input-wrapper { background: #23242A; flex-grow: 1; border-radius: 15px; padding: 12px 15px; display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.05); }
         #input { background: none; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; }
-        .send-btn { color: #6EBDFD; font-size: 28px; cursor: pointer; background: none; border: none; display: flex; align-items: center; transition: 0.2s; }
         .avatar { width: 40px; height: 40px; border-radius: 50%; background: #E0E2E5; color: #444; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; text-transform: uppercase; }
 
         @media (max-width: 768px) {
             #sidebar { width: 100%; position: absolute; height: 100%; z-index: 10; }
             #main-chat { width: 100%; position: absolute; height: 100%; z-index: 20; transform: translateX(100%); transition: 0.25s ease; }
             body.chat-open #main-chat { transform: translateX(0); }
-            .input-area { padding: 10px; }
             #back-mobile { display: block !important; }
         }
     </style>
@@ -93,7 +109,10 @@
 
     <div id="photo-modal">
         <div class="modal-content">
-            <div class="modal-header"><span style="font-weight: bold;">Отправить файлы</span><span onclick="cancelFile()" style="cursor: pointer; font-size: 24px;">×</span></div>
+            <div class="modal-header">
+                <span style="font-weight: bold;">Отправить файлы</span>
+                <span onclick="cancelFile()" style="cursor: pointer; font-size: 24px;">×</span>
+            </div>
             <div class="modal-body" id="modal-preview-container"></div>
             <div class="modal-footer">
                 <input id="modal-caption" placeholder="Добавьте подпись..." autocomplete="off">
@@ -102,7 +121,10 @@
         </div>
     </div>
 
-    <div id="full-viewer" onclick="this.style.display='none'"><div id="viewer-content"></div><span style="position:absolute; top:20px; right:30px; font-size:40px; cursor:pointer;">×</span></div>
+    <div id="full-viewer" onclick="this.style.display='none'">
+        <div id="viewer-content"></div>
+        <span style="position:absolute; top:20px; right:30px; font-size:40px; cursor:pointer;">×</span>
+    </div>
 
     <div id="delete-modal" onclick="closeDeleteModal()">
         <div class="delete-card" onclick="event.stopPropagation()">
@@ -116,9 +138,7 @@
 
     <div id="sidebar">
         <div class="sidebar-header">
-            <div class="menu-btn" style="cursor:pointer; opacity:0.6;">☰</div>
-            <input id="search-input" placeholder="Search" onkeyup="if(event.key==='Enter') openChat(this.value)">
-            <div style="color: #BAC1F3; font-weight: bold; font-size: 14px; margin-left: auto;">Luminous</div>
+            <input id="search-input" placeholder="Поиск по Email..." onkeyup="if(event.key==='Enter') openChat(this.value)">
         </div>
         <div id="chat-list"></div>
     </div>
@@ -134,11 +154,11 @@
         <form class="input-area" id="msg-form">
             <div class="input-wrapper">
                 <div style="font-size: 20px; cursor: pointer; opacity: 0.7;">😊</div>
-                <input id="input" placeholder="Message" autocomplete="off">
+                <input id="input" placeholder="Cообщение..." autocomplete="off">
                 <label for="file-input" style="font-size: 20px; cursor: pointer; transform: rotate(45deg); opacity: 0.7;">📎</label>
                 <input type="file" id="file-input" style="display:none" multiple>
             </div>
-            <button type="submit" class="send-btn">➤</button>
+            <button type="submit" style="background:none; border:none; color:#6EBDFD; font-size:28px; cursor:pointer;">➤</button>
         </form>
     </div>
 
@@ -159,27 +179,31 @@
                 myEmail = session.user.email.toLowerCase().trim();
                 document.getElementById('auth-overlay').style.display = 'none';
                 
-                _sup.channel('messages-realtime').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    const m = payload.new;
-                    if ((m.author_email === myEmail && m.receiver_email === currentPeer) || (m.author_email === currentPeer && m.receiver_email === myEmail)) render(m);
-                    loadHistory();
-                }).subscribe();
-                loadHistory();
+                _sup.channel('messages-realtime')
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                        const m = payload.new;
+                        if ((m.author_email === myEmail && m.receiver_email === currentPeer) || 
+                            (m.author_email === currentPeer && m.receiver_email === myEmail)) {
+                            render(m);
+                        }
+                        loadHistory(); 
+                    })
+                    .subscribe();
+
+                loadHistory(); 
             } else {
                 document.getElementById('auth-overlay').style.display = 'flex';
             }
         }
 
-        // --- ЛОГИКА НОВОВВЕДЕНИЯ (Поиск по профилям) ---
         async function openChat(email) {
             if (!email) return;
             email = email.toLowerCase().trim();
 
-            // Проверка, существует ли пользователь в базе профилей
+            // НОВОВВЕДЕНИЕ: Проверка существования профиля
             const { data: profiles, error } = await _sup.from('user_profiles').select('display_name').eq('email', email);
-            
             if (error || !profiles || profiles.length === 0) {
-                alert("Пользователь не найден. Проверьте email или убедитесь, что он зарегистрирован.");
+                alert("Пользователь не найден. Убедитесь, что он зарегистрирован.");
                 return;
             }
 
@@ -188,28 +212,23 @@
             document.body.classList.add('chat-open');
             
             const name = profiles[0].display_name || email.split('@')[0];
+            profileCache[email] = name;
+            
             document.getElementById('chat-title').innerText = name;
             document.getElementById('header-av').innerText = name[0];
             document.getElementById('messages').innerHTML = "";
-
-            const { data: history } = await _sup.from('messages')
+            
+            const { data } = await _sup.from('messages')
                 .select('*')
                 .or(`and(author_email.eq.${myEmail},receiver_email.eq.${currentPeer}),and(author_email.eq.${currentPeer},receiver_email.eq.${myEmail})`)
                 .order('created_at', { ascending: true });
             
-            if (history) history.forEach(render);
+            if (data) data.forEach(render);
             updateChatListUI();
+            loadHistory();
         }
 
-        async function getProfileName(email) {
-            if (profileCache[email]) return profileCache[email];
-            const { data } = await _sup.from('user_profiles').select('display_name').eq('email', email);
-            const name = (data && data.length > 0) ? data[0].display_name : email.split('@')[0];
-            profileCache[email] = name;
-            return name;
-        }
-
-        // --- ОСТАЛЬНЫЕ МЕХАНИКИ (Без изменений) ---
+        // РАБОТА С ФАЙЛАМИ
         fileInput.onchange = () => {
             const files = fileInput.files;
             if (files.length === 0) return;
@@ -218,9 +237,11 @@
                 const url = URL.createObjectURL(file);
                 const item = document.createElement('div');
                 item.className = "preview-item";
-                if (file.type.startsWith('image/')) item.innerHTML = `<img src="${url}">`;
-                else if (file.type.startsWith('video/')) item.innerHTML = `<video src="${url}"></video>`;
-                else {
+                if (file.type.startsWith('image/')) {
+                    item.innerHTML = `<img src="${url}">`;
+                } else if (file.type.startsWith('video/')) {
+                    item.innerHTML = `<video src="${url}"></video>`;
+                } else {
                     const ext = file.name.split('.').pop().toUpperCase();
                     item.innerHTML = `<div class="file-icon-label">📄<br>${ext}<br>${file.name.substring(0,10)}...</div>`;
                 }
@@ -235,40 +256,37 @@
             if (files.length === 0 || !currentPeer) return;
             const btn = document.getElementById('modal-send-btn');
             btn.innerText = "ЗАГРУЗКА..."; btn.disabled = true;
+
             try {
                 let uploadedUrls = [];
                 for (let file of files) {
-                    const path = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${file.name.split('.').pop()}`;
-                    const { data, error } = await _sup.storage.from('uploads').upload(path, file);
+                    const fileName = `${Date.now()}_${file.name}`;
+                    const { data: uploadData, error } = await _sup.storage.from('uploads').upload(fileName, file);
                     if (error) throw error;
-                    uploadedUrls.push(_sup.storage.from('uploads').getPublicUrl(path).data.publicUrl);
+                    const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(fileName);
+                    uploadedUrls.push(publicUrl);
                 }
-                await _sup.from('messages').insert([{ text: text || null, author_email: myEmail, receiver_email: currentPeer, file_url: uploadedUrls }]);
+                await _sup.from('messages').insert([{ 
+                    text: text || null, author_email: myEmail, receiver_email: currentPeer,
+                    is_read: false, file_url: uploadedUrls
+                }]);
                 cancelFile();
             } catch (err) { alert("Ошибка: " + err.message); }
             finally { btn.innerText = "ОТПРАВИТЬ"; btn.disabled = false; }
         }
 
+        document.getElementById('modal-send-btn').onclick = sendWithFile;
         function cancelFile() { fileInput.value = ""; modalCaption.value = ""; photoModal.style.display = 'none'; }
-        function openFullView(url, isVideo) { 
-            const viewer = document.getElementById('full-viewer'); const content = document.getElementById('viewer-content');
-            content.innerHTML = isVideo ? `<video src="${url}" controls autoplay style="max-width:100%; max-height:95vh;"></video>` : `<img src="${url}">`;
-            viewer.style.display = 'flex';
-        }
 
-        async function handleAuth(type) {
-            const email = document.getElementById('auth-email').value; const password = document.getElementById('auth-pass').value;
-            let res = type === 'register' ? await _sup.auth.signUp({ email, password }) : await _sup.auth.signInWithPassword({ email, password });
-            if (res.error) { document.getElementById('auth-error').innerText = res.error.message; document.getElementById('auth-error').style.display = 'block'; }
-            else location.reload();
-        }
-
+        // ОБЩИЕ ФУНКЦИИ
         async function loadHistory() {
-            const { data: msgs } = await _sup.from('messages').select('author_email, receiver_email').or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`).order('created_at', {ascending: false});
+            const { data: msgs } = await _sup.from('messages').select('author_email, receiver_email, created_at').or(`author_email.eq.${myEmail},receiver_email.eq.${myEmail}`).order('created_at', {ascending: false});
             if (!msgs) return;
             const hidden = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
             const emails = [...new Set(msgs.map(m => m.author_email.toLowerCase() === myEmail ? m.receiver_email.toLowerCase() : m.author_email.toLowerCase()))].filter(e => !hidden.includes(e));
-            const list = document.getElementById('chat-list'); list.innerHTML = "";
+
+            const list = document.getElementById('chat-list');
+            list.innerHTML = "";
             for (const email of emails) {
                 const name = await getProfileName(email);
                 const item = document.createElement('div');
@@ -277,8 +295,6 @@
                 item.innerHTML = `<div class="avatar">${name[0]}</div><div style="font-weight:600; font-size:14px;">${name}</div>`;
                 item.onclick = () => openChat(email);
                 item.oncontextmenu = (e) => { e.preventDefault(); openDeleteMenu(email); };
-                item.ontouchstart = () => pressTimer = setTimeout(() => openDeleteMenu(email), 600);
-                item.ontouchend = () => clearTimeout(pressTimer);
                 list.appendChild(item);
             }
         }
@@ -287,57 +303,75 @@
             const date = new Date(m.created_at).toLocaleDateString();
             if (lastRenderedDate !== date) {
                 lastRenderedDate = date;
-                const div = document.createElement('div'); div.className = 'date-divider';
+                const div = document.createElement('div');
+                div.className = 'date-divider';
                 div.innerText = date === new Date().toLocaleDateString() ? "Сегодня" : date;
                 document.getElementById('messages').appendChild(div);
             }
+
             const isMine = m.author_email.toLowerCase() === myEmail;
-            const div = document.createElement('div'); div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
+            const div = document.createElement('div');
+            div.className = `msg ${isMine ? 'msg-mine' : 'msg-theirs'}`;
+            
             let fHtml = "";
-            if (m.file_url) {
-                const urls = Array.isArray(m.file_url) ? m.file_url : [m.file_url];
-                if (urls.length > 0) {
-                    fHtml = `<div class="photo-grid grid-${Math.min(urls.length, 4)}">`;
-                    urls.forEach(url => {
-                        const cleanUrl = String(url).replace(/[{}"]/g, "").trim();
-                        if (cleanUrl.match(/\.(mp4|webm|mov)/i)) fHtml += `<video src="${cleanUrl}" onclick="event.stopPropagation(); openFullView('${cleanUrl}', true)" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
-                        else fHtml += `<img src="${cleanUrl}" onclick="openFullView('${cleanUrl}', false)">`;
-                    });
-                    fHtml += `</div>`;
-                }
+            if (m.file_url && m.file_url.length > 0) {
+                fHtml = `<div class="photo-grid grid-${Math.min(m.file_url.length, 4)}">`;
+                m.file_url.forEach(url => {
+                    const u = String(url).replace(/[{}"]/g, "").trim();
+                    if (u.match(/\.(mp4|webm|mov|ogg)/i)) fHtml += `<video src="${u}" onclick="event.stopPropagation(); openFullView('${u}', true)" muted onmouseover="this.play()" onmouseout="this.pause()"></video>`;
+                    else if (u.match(/\.(jpg|jpeg|png|gif|webp|svg)/i)) fHtml += `<img src="${u}" onclick="openFullView('${u}', false)">`;
+                    else fHtml += `<div onclick="window.open('${u}', '_blank')" style="background:#23242A; padding:15px; border-radius:10px; cursor:pointer; text-align:center; font-size:11px; border:1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center;">📁<br>${u.split('/').pop().substring(0,10)}...</div>`;
+                });
+                fHtml += `</div>`;
             }
+
             const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            div.innerHTML = `${fHtml}${m.text ? `<div style="white-space: pre-wrap;">${m.text}</div>` : ""}<div class="msg-info">${time} ${isMine ? '✓' : ''}</div>`;
-            document.getElementById('messages').appendChild(div);
-            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+            const tick = isMine ? (m.is_read ? '✓✓' : '✓') : '';
+            div.innerHTML = `${fHtml}${m.text ? `<div style="white-space: pre-wrap;">${m.text}</div>` : ""}<div class="msg-info"><span>${time}</span><span style="font-weight:bold; color:#58BFFF;">${tick}</span></div>`;
+            
+            const box = document.getElementById('messages');
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function handleAuth(type) {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-pass').value;
+            let res = type === 'register' ? await _sup.auth.signUp({ email, password }) : await _sup.auth.signInWithPassword({ email, password });
+            if (res.error) {
+                const err = document.getElementById('auth-error');
+                err.innerText = res.error.message; err.style.display = 'block';
+            } else location.reload();
+        }
+
+        async function getProfileName(email) {
+            if (profileCache[email]) return profileCache[email];
+            const { data } = await _sup.from('user_profiles').select('display_name').eq('email', email).maybeSingle();
+            profileCache[email] = data?.display_name || email.split('@')[0];
+            return profileCache[email];
+        }
+
+        function openFullView(url, isVid) {
+            const content = document.getElementById('viewer-content');
+            content.innerHTML = isVid ? `<video src="${url}" controls autoplay style="max-width:100%; max-height:95vh;"></video>` : `<img src="${url}">`;
+            document.getElementById('full-viewer').style.display = 'flex';
         }
 
         function updateChatListUI() { document.querySelectorAll('.chat-item').forEach(el => el.classList.toggle('active', el.getAttribute('data-email') === currentPeer)); }
         function goBack() { document.body.classList.remove('chat-open'); currentPeer = null; updateChatListUI(); }
         function logout() { _sup.auth.signOut(); location.reload(); }
-        function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; chatToDelete = null; }
-        async function openDeleteMenu(email) { chatToDelete = email; document.getElementById('delete-modal').style.display = 'flex'; }
-        async function confirmDelete(mode) {
-            if (mode === 'both') await _sup.from('messages').delete().or(`and(author_email.eq.${myEmail},receiver_email.eq.${chatToDelete}),and(author_email.eq.${chatToDelete},receiver_email.eq.${myEmail})`);
-            else {
-                let h = JSON.parse(localStorage.getItem('hidden_chats') || "[]");
-                if(!h.includes(chatToDelete)) h.push(chatToDelete);
-                localStorage.setItem('hidden_chats', JSON.stringify(h));
-            }
-            if (currentPeer === chatToDelete) goBack();
-            closeDeleteModal(); loadHistory();
-        }
+        function openDeleteMenu(email) { chatToDelete = email; document.getElementById('delete-info').innerText = email; document.getElementById('delete-modal').style.display = 'flex'; }
+        function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; }
 
         document.getElementById('msg-form').onsubmit = async (e) => {
             e.preventDefault();
             const i = document.getElementById('input');
             if (i.value.trim() && currentPeer) {
-                const text = i.value; i.value = "";
-                await _sup.from('messages').insert([{ text, author_email: myEmail, receiver_email: currentPeer }]);
+                const text = i.value.trim(); i.value = "";
+                await _sup.from('messages').insert([{ text, author_email: myEmail, receiver_email: currentPeer, is_read: false }]);
             }
         };
 
-        document.getElementById('modal-send-btn').onclick = sendWithFile;
         init();
     </script>
 </body>
