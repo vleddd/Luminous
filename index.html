@@ -136,28 +136,29 @@
     align-items: center;
     gap: 12px;
     padding: 10px 20px;
-    
-    /* Размеры из Layout (высоту лучше оставить 60px как в вашем коде, 
-       так как 307px на скрине — это, скорее всего, высота всего фрейма) */
-    height: 60px; 
     margin: 5px;
 
-    /* Appearance: Corner radius 200 */
+    /* Размеры строго по макету */
+    width: 2649px; 
+    height: 307px;
+
+    /* Скругление углов */
     border-radius: 200px;
 
-    /* Fill: Linear gradient (цвета из Stops) */
-    /* Общая прозрачность заливки 60% (0.6) */
-    background: linear-gradient(180deg, 
-        rgba(62, 63, 65, 0.6) 0%,   /* Цвет #3E3F41 */
-        rgba(34, 36, 40, 0.6) 56%  /* Цвет #222428 */
+    /* Горизонтальный градиент: слева (0%) направо (56%) */
+    /* Используем 90deg для направления "слева-направо" */
+    /* Цвета с прозрачностью 60%, как в первом скриншоте */
+    background: linear-gradient(90deg, 
+        rgba(62, 63, 65, 0.6) 0%,   /* #3E3F41 слева */
+        rgba(34, 36, 40, 0.6) 56%   /* #222428 справа */
     );
 
-    /* Stroke: Inside, 2px, Black #000000 */
+    /* Обводка (Inside) */
     border: 2px solid #000000;
-    box-sizing: border-box; /* Чтобы рамка была внутри (Inside) */
+    box-sizing: border-box; 
 
-    /* Effects: Background blur */
-    backdrop-filter: blur(10px); /* Эффект размытия заднего фона */
+    /* Размытие фона (Background blur) */
+    backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
         #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
