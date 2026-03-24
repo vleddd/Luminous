@@ -128,48 +128,50 @@
     align-items: center;
     gap: 12px;
     padding: 10px 15px;
-    margin-bottom: 12px; /* Увеличил отступ для полоски */
+    margin-bottom: 12px;
     cursor: pointer;
     user-select: none;
     position: relative;
     box-sizing: border-box;
 
-    /* ПЛАВНОСТЬ ВСЕХ ИЗМЕНЕНИЙ */
+    /* Плавный переход для всех свойств, включая скругление */
     transition: 
-        border-radius 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
-        border 0.3s ease, 
-        background-position 0.5s ease;
+        border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+        border 0.2s ease, 
+        background 0.3s ease,
+        background-position 0.3s ease;
 
-    /* НАЧАЛЬНОЕ СОСТОЯНИЕ (Normal из макета) */
+    /* Исходное состояние (Normal) */
     border-radius: 110px; 
     border: 2px solid rgba(255, 255, 255, 0.3);
     
-    /* Подготовка градиента для выезда (делаем его в 2 раза шире) */
+    /* Градиент для обычного состояния и подготовки к Hover */
     background: linear-gradient(90deg, 
-        rgba(173, 173, 173, 0.1) 0%,   /* Прозрачный серый */
-        rgba(173, 173, 173, 0.2) 50%,  /* Серый Fill 20% */
-        rgba(144, 217, 249, 0.4) 100%  /* Голубой для ховера */
+        rgba(173, 173, 173, 0.2) 0%, 
+        rgba(135, 135, 135, 0.2) 50%, 
+        rgba(144, 217, 249, 0.2) 100%
     );
     background-size: 200% 100%;
-    background-position: left bottom;
+    background-position: 0% 0%;
 
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
 
-/* ЭФФЕКТ ВЫЕЗДА ПРИ НАВЕДЕНИИ (Hover) */
+/* ХОВЕР: Лайнер выезжает быстрее (0.3s) и меняет скругление */
 .chat-item:hover:not(.active) {
-    background-position: right bottom; /* Градиент "заезжает" справа */
-    border-radius: 100px;
+    background-position: 100% 0%; /* Лайнер "выезжает" */
+    border-radius: 100px; /* Плавная смена со 110 до 100 */
     border: 2px solid rgba(255, 255, 255, 0.4);
 }
 
-/* АКТИВНЫЙ ЧАТ (Меняем скругление с 110 до 80) */
+/* АКТИВНЫЙ ЧАТ: Исправляем смену скругления на 80px */
 .chat-item.active {
-    border-radius: 80px !important; /* Четкое изменение формы */
+    /* Принудительно ставим 80px и фиксируем толщину обводки */
+    border-radius: 80px !important; 
     border: 3px solid rgba(255, 255, 255, 0.6) !important;
     
-    /* Фиолетовый лайнер */
+    /* Фиолетовый лайнер (Active) */
     background: linear-gradient(90deg, 
         rgba(166, 185, 233, 0.2) 0%, 
         rgba(202, 150, 215, 0.2) 69%, 
@@ -178,21 +180,21 @@
     background-size: 100% 100% !important;
 
     backdrop-filter: blur(20px);
+    color: #ffffff;
 }
 
-/* РАЗДЕЛИТЕЛЬНАЯ ПОЛОСКА (0.9px) */
+/* РАЗДЕЛИТЕЛЬ */
 .chat-item::after {
     content: "";
     position: absolute;
-    bottom: -6.45px; /* Дистанция 0.9px от края блока */
-    left: 20px;
-    right: 20px;
+    bottom: -6.45px;
+    left: 25px;
+    right: 25px;
     height: 0.9px;
     background: rgba(255, 255, 255, 0.1);
-    transition: opacity 0.3s;
+    transition: opacity 0.2s;
 }
 
-/* Прячем полоску под активным чатом */
 .chat-item.active::after {
     opacity: 0;
 }
