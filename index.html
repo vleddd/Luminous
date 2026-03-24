@@ -250,65 +250,82 @@
     gap: 12px;
     padding: 0 20px;
     
-    /* --- ПОЗИЦИОНИРОВАНИЕ (Парящий блок) --- */
+    /* --- ПОЗИЦИОНИРОВАНИЕ --- */
     position: absolute;
     top: 15px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
 
-    /* --- РАЗМЕРЫ (Адаптивные) --- */
+    /* --- ГЕОМЕТРИЯ --- */
     width: 90%;
     max-width: 600px;
-    height: 60px; /* Фиксированная высота для ровного скругления */
+    height: 60px;
+    border-radius: 200px !important; /* Из макета Layout */
 
-    /* --- СКРУГЛЕНИЕ (Corner radius: 200) --- */
-    border-radius: 200px !important;
+    /* --- ЭФФЕКТ СТЕКЛА (Заполнение и Блики) --- */
+    /* Основной цвет фона 60% */
+    background-color: rgba(30, 31, 34, 0.6) !important;
+    
+    /* Имитация Inner Shadow #1: Мягкое свечение из центра (Blur 68, 5%) */
+    background-image: radial-gradient(
+        circle at center, 
+        rgba(255, 255, 255, 0.05) 0%, 
+        rgba(255, 255, 255, 0) 75%
+    );
 
-    /* --- ЛАЙНЕР (Градиент 60% Fill) --- */
-    /* Используем rgba, чтобы сам фон был прозрачным */
-    background: linear-gradient(180deg, 
-        rgba(30, 31, 34, 0.6) 0%,   /* #1E1F22, 60% opacity */
-        rgba(26, 27, 30, 0.6) 100%
-    ) !important;
+    /* Имитация Inner Shadow #2: Четкая полоса сверху (Y: 4, Blur: 4, 15%) */
+    /* И тонкая внешняя обводка для эффекта грани */
+    border: 0.8px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        inset 0 4px 4px rgba(255, 255, 255, 0.15), 
+        0 8px 32px rgba(0, 0, 0, 0.3); /* Внешняя тень для парения над чатом */
+    
+    box-sizing: border-box;
 
-    /* --- ОБВОДКА (Glass Stroke, Inside 1px) --- */
-    /* Тонкая, почти прозрачная белая линия для эффекта края стекла */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-sizing: border-box; /* Чтобы 1px не расширял блок */
-
-    /* --- ЭФФЕКТ СТЕКЛА (Сильный Background blur) --- */
-    /* Заменяем blur(5px) на blur(20px) для глубокого матового эффекта */
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    /* --- BACKGROUND BLUR (Frost: 48) --- */
+    /* Сильное размытие по макету Effects */
+    backdrop-filter: blur(48px) saturate(160%);
+    -webkit-backdrop-filter: blur(48px) saturate(160%);
     
     overflow: hidden;
 }
 
-/* --- ТЕКСТ НИКНЕЙМА (Поднят выше) --- */
+/* --- КОНТЕНТ ВНУТРИ ШАПКИ --- */
+
+/* Текст (поднят на 8px относительно центра) */
 #chat-header span, 
 #chat-header div:not(.avatar) {
     position: relative;
     top: -8px; 
     font-weight: 500;
     line-height: 1;
-    color: #ffffff; /* Белый текст для контраста */
-    
-    /* Легкая тень для текста, чтобы он не терялся на размытом фоне */
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-/* --- АВАТАРКА (На месте) --- */
+/* Аватарка (без смещения по вертикали) */
 #chat-header .avatar {
     position: relative;
     top: 0;
     flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
 }
 
-/* --- ОТСТУП ДЛЯ СООБЩЕНИЙ --- */
-/* Чтобы сообщения не прятались за парящей шапкой */
+#chat-header .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* --- КОРРЕКЦИЯ СПИСКА СООБЩЕНИЙ --- */
 #messages {
-    padding-top: 85px !important; /* 60px (высота) + 15px (топ) + 10px (зазор) */
+    /* Чтобы первые сообщения не перекрывались шапкой */
+    padding-top: 90px !important; 
 }
         #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
