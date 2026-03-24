@@ -128,35 +128,42 @@
             user-select: none;
         }
         .chat-item.active {
-    /* ФИОЛЕТОВО-ГОЛУБОЙ ГРАДИЕНТ (по твоим стопам из Figma) */
+    /* 1. ЛАЙНЕР (Градиент) — 20% прозрачности (Fill: 20%) */
     background: linear-gradient(90deg, 
-        #A6B9E9 0%, 
-        #CA96D7 69%, 
-        #A696D7 100%
+        rgba(166, 185, 233, 0.2) 0%,   /* #A6B9E9 */
+        rgba(202, 150, 215, 0.2) 69%,  /* #CA96D7 */
+        rgba(166, 150, 215, 0.2) 100%  /* #A696D7 */
     ) !important;
 
-    /* СКРУГЛЕНИЕ */
+    /* 2. СКРУГЛЕНИЕ (Corner radius: 80) */
     border-radius: 80px !important;
 
-    /* ОБВОДКА (Белая полупрозрачная, 3px) */
+    /* 3. ОБВОДКА (Stroke: FFFFFF, 60% opacity, 3px) */
+    /* Используем box-sizing, чтобы 3px не расширяли блок наружу */
     border: 3px solid rgba(255, 255, 255, 0.6) !important;
     box-sizing: border-box;
 
-    /* ЭФФЕКТЫ */
+    /* 4. ЭФФЕКТЫ (Background blur: 20) */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    
-    /* Тень, чтобы блок "отрывался" от темного фона сайдбара */
-    box-shadow: 0 4px 20px rgba(166, 185, 233, 0.3);
 
-    /* Цвет текста внутри активного чата (темный или белый для контраста) */
+    /* Визуальный акцент: белый текст и небольшое свечение */
     color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
-/* Опционально: сделаем никнейм внутри активного чата жирнее */
+/* Наведение на неактивный чат (опционально, для сочности) */
+.chat-item:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Стили для текста внутри активного чата */
 .chat-item.active span {
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    font-weight: 600; /* Имя становится чуть жирнее */
+}
+
+.chat-item.active .avatar {
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Легкий ободок вокруг авы */
 }
 
         /* ОКНО ЧАТА */
