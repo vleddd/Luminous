@@ -137,33 +137,52 @@
     gap: 12px;
     padding: 0 20px;
     
-    /* ПЛАВАЮЩАЯ ПОЗИЦИЯ */
-    position: absolute;  /* Вырываем блок из потока */
-    top: 10px;           /* Отступ от верха */
-    left: 50%;           /* Ставим начало блока по центру */
-    transform: translateX(-50%); /* Сдвигаем назад на половину его ширины для идеального центра */
-    z-index: 1000;       /* Чтобы шапка всегда была поверх сообщений */
+    /* 1. УБИРАЕМ ПРЯМОУГОЛЬНИК (Делаем шапку плавающей) */
+    position: absolute; 
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
 
-    /* Адаптивная ширина */
+    /* 2. АДАПТИВНОСТЬ (Оптимизация для телефонов) */
     width: 90%;
     max-width: 600px;
     height: 60px;
 
-    /* Визуал из макета */
+    /* 3. ДИЗАЙН (Градиент 60% прозрачности) */
     border-radius: 200px;
     background: linear-gradient(90deg, 
-        rgba(62, 63, 65, 0.6) 0%, 
+        rgba(62, 63, 65, 0.6) 0%,   /* Твои 60% прозрачности здесь (0.6) */
         rgba(34, 36, 40, 0.6) 56%
     );
+
+    /* Обводка и размытие */
     border: 0.5px solid #000000;
     box-sizing: border-box; 
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    
+    flex-shrink: 0;
 }
 
-/* Фикс для сообщений: чтобы они не начинались ПРЯМО под шапкой и их было видно */
+/* 4. КОРРЕКЦИЯ ТЕКСТА (Твой никнейм выше центра) */
+#chat-header span, 
+#chat-header div:not(.avatar) {
+    position: relative;
+    top: -8px; 
+    font-weight: 500;
+    line-height: 1;
+    color: #ffffff; /* Чтобы ник был всегда ярким */
+}
+
+#chat-header .avatar {
+    position: relative;
+    top: 0; /* Аватарка остается на месте */
+}
+
+/* 5. ЧТОБЫ СООБЩЕНИЯ НЕ ПРЯТАЛИСЬ ЗА ШАПКОЙ ВНАЧАЛЕ */
 #messages {
-    padding-top: 80px !important; /* Даем место, чтобы сообщения не перекрывались шапкой в самом начале */
+    padding-top: 85px !important; 
 }
 
 /* Текст (как ты настроил) */
