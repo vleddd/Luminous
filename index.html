@@ -131,7 +131,35 @@
 
         /* ОКНО ЧАТА */
         #main-chat { flex-grow: 1; display: flex; flex-direction: column; background: #2E3037; position: relative; }
-        #chat-header { padding: 10px 20px; background: #25272D; display: flex; align-items: center; gap: 12px; height: 60px; margin: 5px; border-radius: 10px; }
+        #chat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    
+    /* Размеры из Layout (высоту лучше оставить 60px как в вашем коде, 
+       так как 307px на скрине — это, скорее всего, высота всего фрейма) */
+    height: 60px; 
+    margin: 5px;
+
+    /* Appearance: Corner radius 200 */
+    border-radius: 200px;
+
+    /* Fill: Linear gradient (цвета из Stops) */
+    /* Общая прозрачность заливки 60% (0.6) */
+    background: linear-gradient(180deg, 
+        rgba(62, 63, 65, 0.6) 0%,   /* Цвет #3E3F41 */
+        rgba(34, 36, 40, 0.6) 56%  /* Цвет #222428 */
+    );
+
+    /* Stroke: Inside, 2px, Black #000000 */
+    border: 2px solid #000000;
+    box-sizing: border-box; /* Чтобы рамка была внутри (Inside) */
+
+    /* Effects: Background blur */
+    backdrop-filter: blur(10px); /* Эффект размытия заднего фона */
+    -webkit-backdrop-filter: blur(10px);
+}
         #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
         .date-divider { align-self: center; background: rgba(0,0,0,0.2); color: #BAC1F3; padding: 5px 15px; border-radius: 20px; font-size: 12px; margin: 15px 0; font-weight: 500; opacity: 0.8; }
