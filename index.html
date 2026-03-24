@@ -133,11 +133,11 @@
         #main-chat { flex-grow: 1; display: flex; flex-direction: column; background: #2E3037; position: relative; }
         #chat-header {
     display: flex;
-    align-items: center;
+    align-items: center; /* Центровка элементов по вертикали */
     gap: 12px;
-    padding: 10px 20px;
+    padding: 0 20px; /* Убрал верхний паддинг, чтобы было проще управлять высотой текста */
     
-    /* ЦЕНТРИРОВАНИЕ: 5px сверху/снизу, auto слева/справа */
+    /* ЦЕНТРИРОВАНИЕ БЛОКА: 5px сверху/снизу, auto слева/справа */
     margin: 5px auto; 
 
     /* Размеры */
@@ -147,20 +147,37 @@
     /* Скругление */
     border-radius: 200px;
 
-    /* Градиент */
+    /* Горизонтальный градиент: 0% слева (#3E3F41), 56% справа (#222428) */
     background: linear-gradient(90deg, 
         rgba(62, 63, 65, 0.6) 0%, 
         rgba(34, 36, 40, 0.6) 56%
     );
 
-    /* Обводка */
-    /* ВНИМАНИЕ: в CSS используется точка (0.8px), а не запятая */
-    border: 0.5px solid #000000;
+    /* Обводка (Inside) */
+    border: 0.2px solid #000000;
     box-sizing: border-box; 
 
-    /* Эффект */
+    /* Эффект размытия */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    
+    /* Чтобы всё внутри было красиво */
+    overflow: hidden; 
+}
+
+/* ЭТО ПРАВИЛО ПОДНИМАЕТ НИКНЕЙМ ВЫШЕ */
+#chat-header span, 
+#chat-header div:not(.avatar) {
+    position: relative;
+    top: -4px; /* Отрицательное число тянет текст вверх. Поставьте -4px, если нужно еще выше */
+    font-weight: 500;
+    line-height: 1;
+}
+
+/* Исправляем положение аватарки, чтобы она НЕ поднималась вместе с текстом */
+#chat-header .avatar {
+    position: relative;
+    top: 0; 
 }
         #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
