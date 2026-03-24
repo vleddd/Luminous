@@ -122,48 +122,81 @@
         #search-input { background: #33353B; border: none; border-radius: 40px; color: #fff; outline: none; padding: 8px 15px; flex-grow: 1; font-size: 14px; }
         #chat-list { overflow-y: auto; flex-grow: 1; padding: 10px; }
 
-        .chat-item {
-            background: transparent; border-radius: 15px; margin-bottom: 8px; padding: 10px; 
-            display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s;
-            user-select: none;
-        }
-        .chat-item.active {
-    /* 1. ЛАЙНЕР (Градиент) — 20% прозрачности (Fill: 20%) */
+        /* ОБЫЧНЫЙ (НЕАКТИВНЫЙ) ЧАТ */
+.chat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 15px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+    position: relative; /* Для позиционирования полоски-разделителя */
+
+    /* Параметры из последнего скрина */
+    border-radius: 110px; 
     background: linear-gradient(90deg, 
-        rgba(166, 185, 233, 0.2) 0%,   /* #A6B9E9 */
-        rgba(202, 150, 215, 0.2) 69%,  /* #CA96D7 */
-        rgba(166, 150, 215, 0.2) 100%  /* #A696D7 */
-    ) !important;
-
-    /* 2. СКРУГЛЕНИЕ (Corner radius: 80) */
-    border-radius: 80px !important;
-
-    /* 3. ОБВОДКА (Stroke: FFFFFF, 60% opacity, 3px) */
-    /* Используем box-sizing, чтобы 3px не расширяли блок наружу */
-    border: 0.2px solid rgba(255, 255, 255, 0.6) !important;
+        rgba(173, 173, 173, 0.2) 0%,  /* #ADADAD */
+        rgba(135, 135, 135, 0.2) 100% /* #878787 */
+    );
+    
+    /* Stroke: FFFFFF 30%, Weight 2 */
+    border: 2px solid rgba(255, 255, 255, 0.3);
     box-sizing: border-box;
 
-    /* 4. ЭФФЕКТЫ (Background blur: 20) */
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    /* Background blur */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 
-    /* Визуальный акцент: белый текст и небольшое свечение */
-    color: #ffffff;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    /* Отступ снизу, чтобы была видна полоска */
+    margin-bottom: 8px; 
 }
 
-/* Наведение на неактивный чат (опционально, для сочности) */
+/* СЕРАЯ ПОЛОСКА-РАЗДЕЛИТЕЛЬ */
+/* Она будет появляться под каждым чатом на расстоянии 0.9px */
+.chat-item::after {
+    content: "";
+    position: absolute;
+    bottom: -4.9px; /* 4px (отступ) + 0.9px (сама полоска) */
+    left: 15%;      /* Чтобы полоска не была на всю ширину, как в макетах */
+    right: 15%;
+    height: 0.9px;
+    background: rgba(128, 128, 128, 0.2); /* Ненавязчивый серый */
+    border-radius: 1px;
+}
+
+/* Убираем полоску у последнего чата в списке */
+.chat-item:last-child::after {
+    display: none;
+}
+
+/* СОСТОЯНИЕ ПРИ НАВЕДЕНИИ (Голубой лед) */
 .chat-item:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.05);
+    background: linear-gradient(90deg, 
+        rgba(144, 217, 249, 0.2) 0%, 
+        rgba(255, 255, 255, 0.2) 100%
+    ) !important;
+    border-radius: 100px !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    backdrop-filter: blur(20px);
 }
 
-/* Стили для текста внутри активного чата */
-.chat-item.active span {
-    font-weight: 600; /* Имя становится чуть жирнее */
+/* АКТИВНЫЙ ЧАТ (Фиолетовое стекло) */
+.chat-item.active {
+    background: linear-gradient(90deg, 
+        rgba(166, 185, 233, 0.2) 0%, 
+        rgba(202, 150, 215, 0.2) 69%, 
+        rgba(166, 150, 215, 0.2) 100% 
+    ) !important;
+    border-radius: 80px !important;
+    border: 3px solid rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(20px);
+    color: #ffffff;
 }
 
-.chat-item.active .avatar {
-    border: 1px solid rgba(255, 255, 255, 0.3); /* Легкий ободок вокруг авы */
+/* Прячем полоску под активным чатом, чтобы не мешала свечению */
+.chat-item.active::after, .chat-item:hover::after {
+    opacity: 0;
 }
 
         /* ОКНО ЧАТА */
