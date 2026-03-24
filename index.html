@@ -250,40 +250,42 @@
     gap: 12px;
     padding: 0 20px;
     
-    /* ПОЗИЦИОНИРОВАНИЕ (чтобы не было прямоугольника под блоком) */
+    /* --- ПОЗИЦИОНИРОВАНИЕ (Парящий блок) --- */
     position: absolute;
     top: 15px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
 
-    /* РАЗМЕРЫ (Оптимизировано для ПК и Телефонов) */
+    /* --- РАЗМЕРЫ (Адаптивные) --- */
     width: 90%;
     max-width: 600px;
-    height: 60px;
+    height: 60px; /* Фиксированная высота для ровного скругления */
 
-    /* СКРУГЛЕНИЕ */
-    border-radius: 200px;
+    /* --- СКРУГЛЕНИЕ (Corner radius: 200) --- */
+    border-radius: 200px !important;
 
-    /* ЛАЙНЕР (Градиент) — Прозрачность 60% (0.6) */
-    /* Используем rgba для того, чтобы сам фон был прозрачным */
-    background: linear-gradient(90deg, 
-        rgba(62, 63, 65, 0.6) 0%, 
-        rgba(34, 36, 40, 0.6) 56%
+    /* --- ЛАЙНЕР (Градиент 60% Fill) --- */
+    /* Используем rgba, чтобы сам фон был прозрачным */
+    background: linear-gradient(180deg, 
+        rgba(30, 31, 34, 0.6) 0%,   /* #1E1F22, 60% opacity */
+        rgba(26, 27, 30, 0.6) 100%
     ) !important;
 
-    /* ОБВОДКА (Inside 0.8px) */
-    border: 0.03px solid #000000;
-    box-sizing: border-box; 
+    /* --- ОБВОДКА (Glass Stroke, Inside 1px) --- */
+    /* Тонкая, почти прозрачная белая линия для эффекта края стекла */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box; /* Чтобы 1px не расширял блок */
 
-    /* ЭФФЕКТ СТЕКЛА (Твоя настройка 5px) */
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    /* --- ЭФФЕКТ СТЕКЛА (Сильный Background blur) --- */
+    /* Заменяем blur(5px) на blur(20px) для глубокого матового эффекта */
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     
     overflow: hidden;
 }
 
-/* ТЕКСТ НИКНЕЙМА (Поднят выше) */
+/* --- ТЕКСТ НИКНЕЙМА (Поднят выше) --- */
 #chat-header span, 
 #chat-header div:not(.avatar) {
     position: relative;
@@ -291,18 +293,22 @@
     font-weight: 500;
     line-height: 1;
     color: #ffffff; /* Белый текст для контраста */
+    
+    /* Легкая тень для текста, чтобы он не терялся на размытом фоне */
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
-/* АВАТАРКА (На месте) */
+/* --- АВАТАРКА (На месте) --- */
 #chat-header .avatar {
     position: relative;
     top: 0;
     flex-shrink: 0;
 }
 
-/* ОТСТУП ДЛЯ СООБЩЕНИЙ (чтобы не прятались за шапкой) */
+/* --- ОТСТУП ДЛЯ СООБЩЕНИЙ --- */
+/* Чтобы сообщения не прятались за парящей шапкой */
 #messages {
-    padding-top: 85px !important;
+    padding-top: 85px !important; /* 60px (высота) + 15px (топ) + 10px (зазор) */
 }
         #messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
