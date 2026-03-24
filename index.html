@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Luminous v0.9 - Stable Profile & Search</title>
+    <title>Luminous v0.7 - Media Update</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #25272D; color: #fff; height: 100dvh; display: flex; overflow: hidden; }
@@ -26,29 +26,6 @@
             border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; 
         }
         .auth-secondary { background: transparent; color: #6EBDFD; border: 1px solid #6EBDFD; }
-
-        /* МОДАЛКА ПРОФИЛЯ (TELEGRAM STYLE) */
-        #profile-modal { position: fixed; inset: 0; background: #1c1d21; z-index: 25000; display: none; flex-direction: column; overflow-y: auto; }
-        .profile-header { padding: 15px 20px; display: flex; align-items: center; gap: 20px; position: sticky; top: 0; background: #1c1d21; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .profile-content { padding: 0 20px 40px 20px; max-width: 500px; margin: 0 auto; width: 100%; }
-        
-        .profile-avatar-container { position: relative; width: 120px; height: 120px; margin: 30px auto; }
-        .profile-avatar-big { 
-            width: 120px; height: 120px; border-radius: 50%; background: #7058c9; 
-            display: flex; align-items: center; justify-content: center; font-size: 45px; font-weight: bold;
-            border: 4px solid #2e3037; overflow: hidden; color: white;
-        }
-        .cam-icon { 
-            position: absolute; bottom: 0; right: 0; background: #1c1d21; border-radius: 50%; 
-            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
-            border: 2px solid #2e3037; font-size: 18px; cursor: pointer;
-        }
-
-        .edit-label { font-size: 13px; color: #7058c9; font-weight: 600; margin: 20px 0 8px 5px; display: block; }
-        .profile-field-box { background: #2e3037; border-radius: 12px; padding: 2px 15px; margin-bottom: 5px; border-bottom: 2px solid transparent; transition: 0.2s; }
-        .profile-field-box:focus-within { border-bottom-color: #7058c9; }
-        .profile-field-box input, .profile-field-box textarea { width: 100%; background: none; border: none; color: white; padding: 12px 0; outline: none; font-size: 16px; resize: none; }
-        .field-hint { font-size: 12px; color: #8e94a5; margin-bottom: 20px; padding-left: 5px; line-height: 1.4; }
 
         /* МОДАЛКА УДАЛЕНИЯ */
         #delete-modal {
@@ -100,6 +77,20 @@
         #modal-caption { background: #23242A; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; padding: 10px 15px; border-radius: 12px; }
         .modal-send-btn { background: #7058c9; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
 
+        /* ОКНО ПРОФИЛЯ */
+        #profile-overlay {
+            position: fixed; inset: 0; background: #1E1F23; z-index: 40000;
+            display: none; flex-direction: column;
+        }
+        .profile-header { padding: 15px 20px; display: flex; align-items: center; gap: 15px; background: #25272D; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .profile-body { padding: 20px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .profile-avatar-big { width: 100px; height: 100px; border-radius: 50%; background: #7058c9; display: flex; align-items: center; justify-content: center; font-size: 40px; position: relative; cursor: pointer; overflow: hidden; }
+        .profile-avatar-big img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-section { width: 100%; max-width: 400px; background: #2E3037; border-radius: 20px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        .profile-label { font-size: 12px; color: #6EBDFD; margin-bottom: 5px; padding-left: 5px; }
+        .profile-input { background: transparent; border: none; color: #fff; width: 100%; font-size: 16px; outline: none; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 5px; margin-bottom: 15px; }
+        .profile-input:focus { border-bottom-color: #7058c9; }
+
         /* FULL VIEW OVERLAY */
         #full-viewer {
             position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 50000;
@@ -147,7 +138,8 @@
         #input { background: none; border: none; color: #fff; outline: none; flex-grow: 1; font-size: 16px; }
         .send-btn { color: #6EBDFD; font-size: 28px; cursor: pointer; background: none; border: none; display: flex; align-items: center; transition: 0.2s; }
 
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #7058c9; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; text-transform: uppercase; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #E0E2E5; color: #444; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; text-transform: uppercase; overflow: hidden; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
         @media (max-width: 768px) {
             #sidebar { width: 100%; position: absolute; height: 100%; z-index: 10; }
@@ -171,39 +163,6 @@
         </div>
     </div>
 
-    <div id="profile-modal">
-        <div class="profile-header">
-            <span onclick="document.getElementById('profile-modal').style.display='none'" style="cursor:pointer; font-size:24px;">←</span>
-            <span style="font-weight: bold; font-size: 18px;">Изменить профиль</span>
-            <span onclick="saveProfileData()" style="margin-left:auto; color:#6EBDFD; font-weight:bold; cursor:pointer;">ГОТОВО</span>
-        </div>
-        <div class="profile-content">
-            <div class="profile-avatar-container">
-                <div class="profile-avatar-big" id="profile-av-big">?</div>
-                <div class="cam-icon">📷</div>
-            </div>
-            
-            <span class="edit-label">Имя (обязательно)</span>
-            <div class="profile-field-box"><input id="profile-first-name" placeholder="Ваше имя"></div>
-
-            <span class="edit-label">Фамилия (опционально)</span>
-            <div class="profile-field-box"><input id="profile-last-name" placeholder="Ваша фамилия"></div>
-
-            <span class="edit-label">О себе</span>
-            <div class="profile-field-box"><textarea id="profile-bio" rows="2" maxlength="70" placeholder="Расскажите о себе..."></textarea></div>
-            <div class="field-hint">Любые подробности, такие как возраст, профессия или город.</div>
-
-            <span class="edit-label">Дата рождения</span>
-            <div class="profile-field-box"><input id="profile-birthday" placeholder="Например: 11 августа"></div>
-
-            <div style="height: 20px; border-bottom: 8px solid #141517; margin: 0 -20px;"></div>
-
-            <span class="edit-label">Username</span>
-            <div class="profile-field-box"><input id="profile-username" placeholder="Username"></div>
-            <div class="field-hint">Вы можете выбрать публичный юзернейм. Люди смогут найти вас по нему, вводя @ник в поиске.</div>
-        </div>
-    </div>
-
     <div id="photo-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -215,6 +174,40 @@
                 <input id="modal-caption" placeholder="Добавьте подпись..." autocomplete="off">
                 <button class="modal-send-btn" id="modal-send-btn">ОТПРАВИТЬ</button>
             </div>
+        </div>
+    </div>
+
+    <div id="profile-overlay">
+        <div class="profile-header">
+            <span onclick="toggleProfile(false)" style="cursor: pointer; font-size: 24px;">✕</span>
+            <span style="font-weight: bold; font-size: 18px;">Изменить профиль</span>
+            <button onclick="saveProfile()" style="margin-left: auto; background: none; border: none; color: #6EBDFD; font-weight: bold; cursor: pointer;">Готово</button>
+        </div>
+        <div class="profile-body">
+            <div class="profile-avatar-big" id="profile-av-container">
+                <span id="profile-av-letter">?</span>
+                <img id="profile-av-img" style="display:none">
+                <label for="av-upload" style="position:absolute; inset:0; background:rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; opacity:0; transition:0.2s; cursor:pointer;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">📷</label>
+                <input type="file" id="av-upload" style="display:none" accept="image/*" onchange="uploadAvatar(this)">
+            </div>
+            
+            <div class="profile-section">
+                <div class="profile-label">ИМЯ</div>
+                <input id="p-first-name" class="profile-input" placeholder="Ваше имя">
+                <div class="profile-label">ФАМИЛИЯ</div>
+                <input id="p-last-name" class="profile-input" placeholder="Ваша фамилия">
+            </div>
+
+            <div class="profile-section">
+                <div class="profile-label">ИМЯ ПОЛЬЗОВАТЕЛЯ</div>
+                <input id="p-username" class="profile-input" placeholder="@username">
+                <div class="profile-label">О СЕБЕ</div>
+                <input id="p-bio" class="profile-input" placeholder="Пару слов о себе" maxlength="70">
+                <div class="profile-label">ДАТА РОЖДЕНИЯ</div>
+                <input id="p-birthday" class="profile-input" type="text" placeholder="Напр: 11 августа">
+            </div>
+
+            <button onclick="logout()" style="width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; border: 1px solid #ff4d4d; color: #ff4d4d; background: transparent; cursor: pointer; font-weight: bold;">Выйти из аккаунта</button>
         </div>
     </div>
 
@@ -235,8 +228,8 @@
 
     <div id="sidebar">
         <div class="sidebar-header">
-            <div class="menu-btn" style="cursor:pointer; opacity:0.6;" onclick="openProfileSettings()">☰</div>
-            <input id="search-input" placeholder="Search @username" onkeyup="if(event.key==='Enter') searchUser(this.value)">
+            <div class="menu-btn" style="cursor:pointer; opacity:0.6;" onclick="toggleProfile(true)">☰</div>
+            <input id="search-input" placeholder="Search" onkeyup="if(event.key==='Enter') searchUser(this.value)">
             <div style="color: #BAC1F3; font-weight: bold; font-size: 14px; margin-left: auto;">Luminous</div>
         </div>
         <div id="chat-list"></div>
@@ -278,17 +271,6 @@
                 myEmail = session.user.email.toLowerCase().trim();
                 myId = session.user.id;
                 document.getElementById('auth-overlay').style.display = 'none';
-
-                // Гарантируем наличие профиля
-                const { data: prof } = await _sup.from('user_profiles').select('id').eq('id', myId).maybeSingle();
-                if (!prof) {
-                    await _sup.from('user_profiles').insert([{ 
-                        id: myId, 
-                        email: myEmail, 
-                        display_name: myEmail.split('@')[0], 
-                        username: 'user' + Math.floor(Math.random()*10000) 
-                    }]);
-                }
                 
                 _sup.channel('messages-realtime')
                     .on('postgres_changes', { 
@@ -306,66 +288,100 @@
                     .subscribe();
 
                 loadHistory(); 
+                loadMyProfile();
             } else {
                 document.getElementById('auth-overlay').style.display = 'flex';
             }
         }
 
         // --- ЛОГИКА ПРОФИЛЯ ---
-        async function openProfileSettings() {
+        async function loadMyProfile() {
             const { data } = await _sup.from('user_profiles').select('*').eq('id', myId).maybeSingle();
             if (data) {
-                document.getElementById('profile-first-name').value = data.display_name || "";
-                document.getElementById('profile-last-name').value = data.last_name || "";
-                document.getElementById('profile-bio').value = data.bio || "";
-                document.getElementById('profile-username').value = data.username || "";
-                document.getElementById('profile-birthday').value = data.birthday || "";
-                document.getElementById('profile-av-big').innerText = (data.display_name || "?")[0].toUpperCase();
-                document.getElementById('profile-modal').style.display = 'flex';
+                document.getElementById('p-first-name').value = data.display_name || "";
+                document.getElementById('p-last-name').value = data.last_name || "";
+                document.getElementById('p-username').value = data.username ? `@${data.username.replace('@','')}` : "";
+                document.getElementById('p-bio').value = data.bio || "";
+                document.getElementById('p-birthday').value = data.birthday || "";
+                
+                if (data.avatar_url) {
+                    document.getElementById('profile-av-img').src = data.avatar_url;
+                    document.getElementById('profile-av-img').style.display = "block";
+                    document.getElementById('profile-av-letter').style.display = "none";
+                } else {
+                    document.getElementById('profile-av-letter').innerText = (data.display_name || myEmail)[0];
+                }
             }
         }
 
-        async function saveProfileData() {
-            const update = {
+        async function saveProfile() {
+            const dispName = document.getElementById('p-first-name').value.trim();
+            const lName = document.getElementById('p-last-name').value.trim();
+            const uName = document.getElementById('p-username').value.trim().replace('@', '');
+            const bio = document.getElementById('p-bio').value.trim();
+            const bday = document.getElementById('p-birthday').value.trim();
+
+            const { error } = await _sup.from('user_profiles').upsert({
                 id: myId,
-                display_name: document.getElementById('profile-first-name').value.trim(),
-                last_name: document.getElementById('profile-last-name').value.trim(),
-                bio: document.getElementById('profile-bio').value.trim(),
-                username: document.getElementById('profile-username').value.trim().replace('@', '').toLowerCase(),
-                birthday: document.getElementById('profile-birthday').value.trim(),
+                email: myEmail,
+                display_name: dispName,
+                last_name: lName,
+                username: uName,
+                bio: bio,
+                birthday: bday,
                 updated_at: new Date().toISOString()
-            };
+            });
 
-            if (!update.display_name || !update.username) return alert("Имя и Username обязательны!");
-
-            const { error } = await _sup.from('user_profiles').upsert(update, { onConflict: 'id' });
-            
-            if (error) {
-                if (error.code === '23505') alert("Этот username уже занят!");
-                else alert("Ошибка: " + error.message);
-            } else {
-                profileCache[myEmail] = update.display_name;
-                location.reload();
+            if (error) alert("Ошибка: " + error.message);
+            else {
+                profileCache[myEmail] = dispName;
+                toggleProfile(false);
+                loadHistory();
             }
         }
 
-        async function searchUser(val) {
-            if (!val.startsWith('@')) return alert("Начинайте поиск с @ (например: @vlad)");
-            const pure = val.replace('@', '').toLowerCase().trim();
+        async function uploadAvatar(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const ext = file.name.split('.').pop();
+            const path = `avatars/${myId}_${Date.now()}.${ext}`;
+
+            const { data, error } = await _sup.storage.from('uploads').upload(path, file, { upsert: true });
+            if (error) return alert(error.message);
+
+            const { data: { publicUrl } } = _sup.storage.from('uploads').getPublicUrl(path);
             
+            await _sup.from('user_profiles').update({ avatar_url: publicUrl }).eq('id', myId);
+            document.getElementById('profile-av-img').src = publicUrl;
+            document.getElementById('profile-av-img').style.display = "block";
+            document.getElementById('profile-av-letter').style.display = "none";
+        }
+
+        function toggleProfile(show) {
+            document.getElementById('profile-overlay').style.display = show ? 'flex' : 'none';
+        }
+
+        // --- ПОИСК ---
+        async function searchUser(query) {
+            if (!query) return;
+            const cleanQuery = query.replace('@', '').trim();
+            
+            // Ищем по username
             const { data, error } = await _sup.from('user_profiles')
                 .select('email, display_name')
-                .eq('username', pure)
+                .or(`username.eq.${cleanQuery},email.eq.${query.toLowerCase()}`)
                 .maybeSingle();
 
             if (data) {
                 openChat(data.email);
             } else {
-                alert("Пользователь с таким ником не найден.");
+                // Если не нашли профиль, пробуем открыть как email напрямую
+                openChat(query);
             }
         }
 
-        // --- ПРЕДПРОСМОТР ФАЙЛОВ СЕТКОЙ ---
+        // --- ОСТАЛЬНАЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ) ---
+
         fileInput.onchange = () => {
             const files = fileInput.files;
             if (files.length === 0) return;
@@ -440,6 +456,7 @@
                     receiver_email: currentPeer,
                     is_read: false,
                     file_url: uploadedUrls,
+                    sender_id: myId, // Используем UUID для надежности
                     created_at: new Date().toISOString()
                 }]);
                 
@@ -476,8 +493,8 @@
 
         async function openDeleteMenu(email) {
             chatToDelete = email;
-            const name = await getProfileName(email);
-            document.getElementById('delete-info').innerText = `Чат с ${name}`;
+            const profile = await getFullProfile(email);
+            document.getElementById('delete-info').innerText = `Чат с ${profile.name}`;
             document.getElementById('delete-modal').style.display = 'flex';
             document.getElementById('del-only-me').onclick = () => confirmDelete('me');
             document.getElementById('del-both').onclick = () => confirmDelete('both');
@@ -504,9 +521,16 @@
             lastRenderedDate = null;
             
             document.body.classList.add('chat-open');
-            const name = await getProfileName(email);
-            document.getElementById('chat-title').innerText = name;
-            document.getElementById('header-av').innerText = name[0].toUpperCase();
+            const profile = await getFullProfile(email);
+            document.getElementById('chat-title').innerText = profile.name;
+            
+            const headAv = document.getElementById('header-av');
+            if (profile.avatar) {
+                headAv.innerHTML = `<img src="${profile.avatar}">`;
+            } else {
+                headAv.innerText = profile.name[0];
+                headAv.innerHTML = profile.name[0];
+            }
             
             const msgContainer = document.getElementById('messages');
             msgContainer.innerHTML = "";
@@ -535,11 +559,14 @@
 
             list.innerHTML = "";
             for (const email of emails) {
-                const name = await getProfileName(email);
+                const profile = await getFullProfile(email);
                 const item = document.createElement('div');
                 item.className = `chat-item ${currentPeer === email ? 'active' : ''}`;
                 item.setAttribute('data-email', email);
-                item.innerHTML = `<div class="avatar">${name[0].toUpperCase()}</div><div style="font-weight:600; font-size:14px;">${name}</div>`;
+                
+                const avHtml = profile.avatar ? `<img src="${profile.avatar}">` : profile.name[0];
+                
+                item.innerHTML = `<div class="avatar">${avHtml}</div><div style="flex-grow:1"><div style="font-weight:600; font-size:14px;">${profile.name}</div><div style="font-size:11px; opacity:0.5">${profile.username || ''}</div></div>`;
                 item.onclick = () => openChat(email);
                 item.oncontextmenu = (e) => { e.preventDefault(); openDeleteMenu(email); };
                 item.ontouchstart = () => pressTimer = setTimeout(() => openDeleteMenu(email), 600);
@@ -614,12 +641,16 @@
             msgBox.scrollTop = msgBox.scrollHeight;
         }
 
-        async function getProfileName(email) {
+        async function getFullProfile(email) {
             if (profileCache[email]) return profileCache[email];
-            const { data } = await _sup.from('user_profiles').select('display_name').eq('email', email).maybeSingle();
-            const name = data?.display_name || email.split('@')[0];
-            profileCache[email] = name;
-            return name;
+            const { data } = await _sup.from('user_profiles').select('display_name, avatar_url, username').eq('email', email).maybeSingle();
+            const profile = {
+                name: data?.display_name || email.split('@')[0],
+                avatar: data?.avatar_url || null,
+                username: data?.username ? `@${data.username}` : ''
+            };
+            profileCache[email] = profile;
+            return profile;
         }
 
         document.getElementById('msg-form').onsubmit = async (e) => {
@@ -632,6 +663,7 @@
                     text: text, 
                     author_email: myEmail, 
                     receiver_email: currentPeer,
+                    sender_id: myId,
                     is_read: false,
                     created_at: new Date().toISOString()
                 }]);
